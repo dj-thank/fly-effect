@@ -75,3 +75,31 @@ jobs:
           path: work/body-probe/
           if-no-files-found: warn
           retention-days: 14
+  tendon-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e ".[body,mechanics]"
+      - name: Prepare and audit 90 tendons and test bounded support
+        run: python scripts/run_mechanical_study.py --workspace work/tendon-study --duration 0.25
+      - name: Preserve results and failure receipts, not external meshes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ninety-tendon-study
+          path: |
+            work/tendon-study/study/
+            work/tendon-study/*.log
+            work/tendon-study/pipeline-failure.json
+            work/tendon-study/runs/source-tendon-audit/results.json
+            work/tendon-study/runs/six-leg-tendon-candidate/results.json
+          if-no-files-found: warn
+          retention-days: 14
