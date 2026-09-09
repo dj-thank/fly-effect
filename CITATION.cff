@@ -6,3 +6,4 @@ version: 0.1.0a0
 authors:
   - name: "Fly Effect contributors"
 license: MIT
+repository-code: "https://github.com/dj-thank/fly-effect"

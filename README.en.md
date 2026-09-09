@@ -23,7 +23,7 @@ Our next milestones are a published CPG reference reproduction, propulsion feasi
 
 Contribute through reproducible bug reports, documentation, small experiments, unit/coordinate checks, visualization, or translation. See [CONTRIBUTING](CONTRIBUTING.md), [GOVERNANCE](GOVERNANCE.md), and [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md).
 
-Original code is proposed under MIT. External material retains its own terms. No Eon GPL backend or biological dataset is redistributed here. See [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md).
+Original code is licensed under [MIT](LICENSE). External material retains its own terms. No Eon GPL backend or biological dataset is redistributed here. See [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md).
 
 
 Issues and PRs in English or Japanese are welcome. Most detailed documentation currently starts in Japanese; translations are welcome.
