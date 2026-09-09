@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import sys
 from pathlib import Path
 from organism_core.config import DATA, HOME
 
@@ -15,7 +16,10 @@ def doctor(check_data=False):
         for name,expected in lock['files'].items():
             if data[name]['present']:
                 with (DATA/'graph'/name).open('rb') as f:data[name]['sha256_matches']=hashlib.file_digest(f,'sha256').hexdigest()==expected
-    return {'project':'Fly Effect','stage':'pre-alpha','dependencies':dependencies,'data_directory':str(DATA),'graph_files':data,'full_organism_validated':False,'note':'Doctor checks installation/data only. It does not certify a biological model or a full experiment.'}
+    compatibility={'core_python_supported':sys.version_info>=(3,11),
+                   'body_python_supported':(3,12)<=sys.version_info[:2]<(3,15),
+                   'body_python_requirement':'>=3.12,<3.15 (pinned FlyGym)'}
+    return {'runtime_compatibility':compatibility,'project':'Fly Effect','stage':'pre-alpha','dependencies':dependencies,'data_directory':str(DATA),'graph_files':data,'full_organism_validated':False,'note':'Doctor checks installation/data only. It does not certify a biological model or a full experiment.'}
 
 def demo(out):
     import numpy as np
@@ -41,8 +45,26 @@ def main():
     sub=p.add_subparsers(dest='command',required=True)
     d=sub.add_parser('doctor');d.add_argument('--check-data',action='store_true')
     d=sub.add_parser('demo');d.add_argument('--out',type=Path,default=HOME/'work/synthetic-demo')
+    d=sub.add_parser('mechanics-demo',help='Synthetic virtual-work positive/negative controls')
+    d.add_argument('--out',type=Path,default=HOME/'work/mechanics-demo')
+    d=sub.add_parser('calibrate-body',help='Matched artificial motor pulses; not autonomous walking')
+    d.add_argument('--out',type=Path,default=HOME/'work/body-probe')
+    d.add_argument('--duration',type=float,default=.02)
+    d.add_argument('--wall-limit',type=float,default=120.)
+    d.add_argument('--leg',choices=['lf','lm','lh','rf','rm','rh'],default='lf')
+    d.add_argument('--joint-profile',choices=['generic','muscle_compliance','muscle_transfer'],default='muscle_compliance')
     args=p.parse_args()
-    result=doctor(args.check_data) if args.command=='doctor' else demo(args.out)
+    if args.command=='doctor':result=doctor(args.check_data)
+    elif args.command=='demo':result=demo(args.out)
+    elif args.command=='mechanics-demo':
+        from organism_core.calibration import run_mechanics_demo
+        result=run_mechanics_demo(args.out)
+    else:
+        if not (3,12)<=sys.version_info[:2]<(3,15):
+            p.error('The pinned FlyGym body backend requires Python >=3.12,<3.15; core/neural examples also support 3.11.')
+        from organism_core.calibration import run_body_probe
+        result=run_body_probe(args.out,duration=args.duration,joint_profile=args.joint_profile,
+                              leg=args.leg,wall_limit=args.wall_limit)
     print(json.dumps(result,ensure_ascii=False,indent=2))
 
 if __name__=='__main__':main()

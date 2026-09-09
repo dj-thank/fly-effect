@@ -1,8 +1,8 @@
 """Single-accounting hybrid of registered tendons and remaining lumped muscles."""
-from xml.etree import ElementTree as ET
 import numpy as np
 import mujoco as mj
 from .tendon_drive import TendonDrive,pulling_force
+from .mechanics import site_tendon_paths
 
 class HybridMuscles:
     def __init__(self,body,mapping,source_audit):
@@ -14,7 +14,7 @@ class HybridMuscles:
         for index,(joint,polarity) in mapping.assignments.items():
             if index not in self.migrated:pool[joint,polarity]+=1
         self.legacy.pool_sizes=np.maximum(pool,1)
-        self.sites=[[mj.mj_name2id(body.m,mj.mjtObj.mjOBJ_SITE,e.get('site')) for e in t] for t in ET.fromstring(body.xml).find('tendon')]
+        self.sites=site_tendon_paths(body.m)
         self.last_torque=np.zeros(len(body.active_dofs));self.max_base_residual=0.
 
     @property

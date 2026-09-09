@@ -23,8 +23,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install -e ".[dev,neural]"
+      - run: python -m pip install -e ".[dev,neural,mechanics]"
       - run: python -m pytest -q --junitxml=work/validation/junit.xml
+      - run: fly-effect mechanics-demo --out work/validation/mechanics
       - run: python scripts/audit_release.py
       - run: python -m build
       - name: Retain test evidence
@@ -32,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: core-evidence-${{ matrix.os }}-py${{ matrix.python }}
-          path: work/validation/junit.xml
+          path: work/validation/
           if-no-files-found: warn
           retention-days: 14
       - name: Retain distributions for independent validation
@@ -42,4 +43,29 @@ jobs:
           name: validated-distributions
           path: dist/
           if-no-files-found: error
+          retention-days: 14
+  body-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      FLY_EFFECT_HOME: ${{ github.workspace }}
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e ".[body]"
+      - run: fly-effect doctor
+      - name: Probe the actual six-leg body without a neural dataset
+        run: fly-effect calibrate-body --out work/body-probe --duration 0.02 --wall-limit 120
+      - name: Retain mechanical evidence including failure receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: six-leg-body-probe
+          path: work/body-probe/
+          if-no-files-found: warn
           retention-days: 14

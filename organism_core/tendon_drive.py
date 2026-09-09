@@ -77,14 +77,5 @@ class TendonDrive:
         return self.force.copy()
 
 
-def pulling_force(model,data,tendons,tensions):
-    generalized=np.zeros(model.nv)
-    for sites,tension in zip(tendons,tensions):
-        if tension==0:continue
-        for a,b in zip(sites[:-1],sites[1:]):
-            delta=data.site_xpos[b]-data.site_xpos[a];length=np.linalg.norm(delta)
-            if length<=1e-12:raise ValueError('Degenerate tendon segment')
-            force=float(tension)*delta/length
-            for site,value in ((a,force),(b,-force)):
-                mj.mj_applyFT(model,data,value,np.zeros(3),data.site_xpos[site],int(model.site_bodyid[site]),generalized)
-    return generalized
+# Kept as a public import for existing HybridMuscles callers.
+from .mechanics import pulling_force
