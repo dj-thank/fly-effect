@@ -20,3 +20,5 @@ audit_source_tendons.py → transfer_six_leg_tendons.pyは、FlyGymの元筋モ�
 
 問題があればバージョンと最小再現手順をIssueに報告してください。既知の再現環境の固定値はpyproject.tomlにあります。
 
+
+全系runの壁時計上限はチャンク間で確認する協調的な制限です。メモリ上限をOSレベルで強制する機能は未実装です。初回から長い全CNS実験を回さず、人工回路と小さな再現条件から始めてください。
