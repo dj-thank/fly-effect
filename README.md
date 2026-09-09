@@ -1,30 +1,30 @@
 # Fly Effect
 
-**小さな神経のつながりから、大きな理解へ。**
+**Small neural connections. Shared scientific understanding.**
 
-[English](README.en.md) · [はじめる](docs/GETTING_STARTED.md) · [参加する](CONTRIBUTING.md) · [現在地](docs/STATUS.md)
+[日本語版](docs/README.ja.md) · [Getting started](docs/GETTING_STARTED.md) · [Contributing](CONTRIBUTING.md) · [Project status](docs/STATUS.md)
 
 ![Fly Effect](docs/assets/fly-effect.svg)
 
-Fly Effectは、**限られた計算資源で、神経回路・身体・環境の相互作用を再現可能なソフトウェアとして探る**オープンな研究開発プロジェクトです。まずショウジョウバエを対象に、電子空間で神経のつながりを時間発展させ、筋肉や身体、感覚との循環を作ります。
+Fly Effect is an open research and engineering project exploring **interactions between neural circuits, bodies, and environments through reproducible software, under limited computational resources**. We start with the fruit fly: simulating neural connections over time and building a feedback loop with muscles, a physical body, and sensory input.
 
-知的好奇心から始まる小さな実験を、教育、基礎研究、シミュレーション技術、そして将来の医療研究にも役立つ共有財産へ育てたいと考えています。神経科学、物理、ソフトウェア、可視化、翻訳、再現実験。それぞれの得意分野を持ち寄れる場所を目指します。
+We want small experiments driven by curiosity to become shared resources for education, basic science, simulation technology, and potential future benefits to medical research. Neuroscience, physics, software, visualization, translation, and replication all have a place here. We welcome people bringing different skills to a common question.
 
-## 今できること
+## What you can explore today
 
-| 項目 | 現在の範囲 |
+| Area | Current scope |
 |---|---|
-| 小さな回路を試す | 外部データ不要の人工3ニューロン例。発火と保存・再開を確認 |
-| 神経計算 | CPU・Brian2 NumPyでのLIF計算。元IDと固定グラフを保持 |
-| 身体との結合 | 実験的な六脚身体、筋活動・張力・関節トルク、関節感覚と荷重感覚 |
-| 再現性 | データハッシュ、seed、状態保存、記録された姿勢の描画 |
-| 共同開発 | テスト、CI、研究提案テンプレート、貢献・運営・リリース方針 |
+| Small circuits | A three-neuron synthetic example requiring no external data, with spiking and checkpoint replay |
+| Neural simulation | CPU LIF computation with Brian2's NumPy backend, preserving original IDs and a fixed graph |
+| Body coupling | Experimental six-legged physics, muscle activation, tension, joint torque, joint sensing, and load sensing |
+| Reproducibility | Data hashes, seeds, state checkpoints, and rendering of recorded poses |
+| Collaboration | Tests, CI, research proposal templates, contribution guidance, governance, and release procedures |
 
-**現在はpre-alphaです。自律歩行・学習・飛行が完成した生物シミュレーターではありません。** ローカル研究版では六脚の接地反復を確認しましたが、3秒で約0.58mmの正味移動にとどまり、歩行条件を満たしていません。公開コードの検証、人工回路テスト、過去の研究結果は区別して報告します。[検証の範囲](docs/STATUS.md)
+**This project is pre-alpha. It is not a completed organism simulator with autonomous walking, learning, or flight.** The local research prototype produced repeated foot contacts but only about 0.58 mm of net movement in a three-second trial, below its walking acceptance criterion. Public-package validation, synthetic tests, and historical research results are reported separately. See [validation scope](docs/STATUS.md).
 
-## まず小さく動かす
+## Start small
 
-Python 3.11以上を用意し、このリポジトリで実行します。
+With Python 3.11 or later, run these commands from the repository:
 
     python -m venv .venv
     # Windows: .venv\Scripts\Activate.ps1
@@ -34,36 +34,37 @@ Python 3.11以上を用意し、このリポジトリで実行します。
     fly-effect demo --out work/my-first-circuit
     python -m pytest
 
-人工回路のデモは導入・保存・再開の確認用で、ハエの再現性能の証拠ではありません。生物データ、メッシュ、学習済み重みは同梱しません。全CNS・身体実験には追加のデータと準備が必要です。[導入手順](docs/GETTING_STARTED.md) / [データ](docs/DATA.md)
+The synthetic demo checks installation and checkpoint replay; it is not evidence of biological performance. Biological datasets, meshes, and trained weights are not bundled. Full-CNS and body experiments require additional data and preparation. See [setup](docs/GETTING_STARTED.md) and [data requirements](docs/DATA.md).
 
-## 大切にしたいこと
+## Our principles
 
-- **小さく確かめる。** 高価な計算の前に、小さな回路・筋肉・身体で仮説を反証する。
-- **分からないことを残す。** 実測、推定、未同定、未検証を混ぜない。失敗も知識として共有する。
-- **資源を尊重する。** 時間・メモリの上限を決め、大型データや同じ計算を無駄に複製しない。
-- **開かれた共同作業。** 専門家でなくても質問、翻訳、文書、テストから参加できる。
-- **有益な方向へ。** 科学的理解と人の暮らしに役立つ可能性を育てる。意識・完全な生物再現・臨床上の有効性を主張しない。
+- **Test small hypotheses first.** Use small circuits, muscles, and body experiments before expensive simulations.
+- **Keep uncertainty visible.** Distinguish measurements, assumptions, unidentified elements, and untested claims. Share failures as useful knowledge.
+- **Respect computational resources.** Set time and memory budgets, and avoid unnecessary copies of large datasets or repeated computation.
+- **Make collaboration accessible.** Questions, translation, documentation, and tests are valuable contributions; expertise is not a prerequisite for participation.
+- **Work toward useful outcomes.** Develop tools that can benefit scientific understanding and people's lives, without claiming consciousness, complete biological reproduction, or clinical efficacy.
 
-これらは運営理念であり、ソフトウェアのライセンスに追加の用途制限を設けるものではありません。[理念](docs/VISION.md)
+These are project governance principles, not additional field-of-use restrictions on the software license. See [our vision](docs/VISION.md).
 
-## 次に取り組むこと
+## What comes next
 
-1. 公開された歩行リズム候補回路の、小さな再現実験。
-2. 同じ筋肉・身体で支持と推進が可能かを確かめる校正。
-3. 神経の位相・運動単位の募集・力の方向を照合して接続。
-4. 全系へ戻し、感覚から自律的に駆動される歩行を検証。
+1. Reproduce a small, published candidate circuit for walking rhythms.
+2. Calibrate whether the exact muscle/body model can support itself and generate propulsion.
+3. Compare neural phase, motor-unit recruitment, and force direction before coupling the models.
+4. Return to the full system and test walking driven autonomously by sensory input.
 
-歩行スクリプトや学習済み方策は診断・校正の教師には使えますが、実神経回路による自律歩行の成功と混同しません。[ロードマップ](docs/ROADMAP.md)
+Walking scripts and learned policies may serve as diagnostic or calibration teachers. They do not count as successful autonomous behavior generated by the biological neural circuit. See the [roadmap](docs/ROADMAP.md).
 
-## 参加方法
+## Join the project
 
-バグの再現、文書の改善、小規模モデル、単位・座標のレビュー、可視化、翻訳を歓迎します。大きな実験や設計変更はIssueで仮説と計算予算を共有してください。
+We welcome reproducible bug reports, clearer documentation, small model experiments, unit and coordinate checks, visualization, and translation. Discuss larger experiments or design changes in an issue, including the hypothesis and computational budget.
 
-[最初の貢献](docs/FIRST_CONTRIBUTIONS.md) · [貢献ガイド](CONTRIBUTING.md) · [行動規範](CODE_OF_CONDUCT.md) · [運営](GOVERNANCE.md) · [セキュリティ](SECURITY.md)
+Issues and PRs in English or Japanese are welcome. Detailed documentation is currently primarily in Japanese; translation contributions are welcome.
 
-## 出典とライセンス
+[First contributions](docs/FIRST_CONTRIBUTIONS.md) · [Contribution guide](CONTRIBUTING.md) · [Code of conduct](CODE_OF_CONDUCT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md)
 
-独自コードのライセンスは[MIT](LICENSE)です。外部コード・データ・モデル資産はそれぞれのライセンスに従います。EonのGPLバックエンドや外部の生物データ・メッシュを、このリポジトリのMITへ付け替えて配布しません。
+## Sources and license
 
-Shiuらの神経モデル、MaleCNS、NeuroMechFly/FlyGym、FlyMimic、CPG・運動制御の研究に学んでいます。各研究チームの公式プロジェクトではありません。[出典・第三者表記](THIRD_PARTY_NOTICES.md)
+Original code is licensed under [MIT](LICENSE). External code, data, and model assets retain their own licenses. We do not redistribute Eon's GPL backend or relicense external biological datasets and meshes under this project's MIT license.
 
+We build on ideas from Shiu and colleagues' neural model, MaleCNS, NeuroMechFly/FlyGym, FlyMimic, and research on central pattern generators and motor control. Fly Effect is independent of those research teams. See [attribution and third-party notices](THIRD_PARTY_NOTICES.md).
