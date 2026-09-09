@@ -5,7 +5,7 @@
 | 取り組み | 触る場所 | 確認方法 |
 |---|---|---|
 | 分かりにくい説明を改善 | README、docs | 初めて読む人が手順を追えるか |
-| 英語・日本語の翻訳 | README.en.md、docs | 意味と未検証の範囲を維持する |
+| 英語・日本語の翻訳 | README.md、docs/README.ja.md、docs | 意味と未検証の範囲を維持する |
 | デモが動かない状況を報告 | Issue | OS/Python/バージョンと最小手順 |
 | 実験記録を改善 | examples/experiment.json | check_experiment.pyで構造を確認 |
 | 小回路のテストを追加 | tests | データ不要で失敗条件まで再現する |
