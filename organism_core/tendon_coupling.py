@@ -1,8 +1,8 @@
 """Single-accounting hybrid of registered tendons and remaining lumped muscles."""
 import numpy as np
 import mujoco as mj
-from .tendon_drive import TendonDrive,pulling_force
-from .mechanics import site_tendon_paths
+from .tendon_drive import TendonDrive
+from .transmission import SiteTendonTransmission
 
 class HybridMuscles:
     def __init__(self,body,mapping,source_audit):
@@ -14,7 +14,9 @@ class HybridMuscles:
         for index,(joint,polarity) in mapping.assignments.items():
             if index not in self.migrated:pool[joint,polarity]+=1
         self.legacy.pool_sizes=np.maximum(pool,1)
-        self.sites=site_tendon_paths(body.m)
+        self.transmission=SiteTendonTransmission(body.m)
+        self.sites=self.transmission.paths
+        self.unapplied_dofs=np.setdiff1d(np.arange(body.m.nv),body.active_dofs)
         self.last_torque=np.zeros(len(body.active_dofs));self.max_base_residual=0.
 
     @property
@@ -30,9 +32,11 @@ class HybridMuscles:
         b=self.body
         mj.mj_fwdPosition(b.m,b.d);mj.mj_fwdVelocity(b.m,b.d)
         tension=self.tendons.command(b.d);legacy=self.legacy.command(q,velocity)
-        force=pulling_force(b.m,b.d,self.sites,tension)
+        force=self.transmission.force(b.d,tension)
         self.max_base_residual=max(self.max_base_residual,float(np.max(np.abs(force[:6]))))
         if self.max_base_residual>1e-10:raise ValueError('Tendon applies external base force')
+        if np.any(np.abs(force[self.unapplied_dofs])>1e-10):
+            raise ValueError('Tendon force on an unrepresented DOF would be discarded')
         self.last_torque=legacy+force[b.active_dofs]
         return self.last_torque.copy()
 

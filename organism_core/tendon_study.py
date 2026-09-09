@@ -12,33 +12,8 @@ import time
 import numpy as np
 import mujoco as mj
 from .transmission import SiteTendonTransmission, audit_transmission
-from .static_support import solve_support
+from .support_diagnostics import contact_columns, evaluate_support, CONTACT_SEMANTICS
 from .calibration import write_result
-
-
-def contact_columns(model, data):
-    """Real foot/ground contact locations; no invented anchor or base support."""
-    blocks, friction, records, nonfoot = [], [], [], []
-    for contact in data.contact[:data.ncon]:
-        if contact.dist > 0:
-            continue
-        names = [mj.mj_id2name(model, mj.mjtObj.mjOBJ_GEOM, int(g)) or ''
-                 for g in (contact.geom1, contact.geom2)]
-        if 'ground_plane' not in names:
-            continue
-        other = 1 if names[0] == 'ground_plane' else 0
-        name = names[other]
-        if not any(f'/{leg}_tarsus' in name for leg in ('lf','lm','lh','rf','rm','rh')):
-            nonfoot.append(name)
-            continue
-        geom = int((contact.geom1, contact.geom2)[other])
-        jac = np.zeros((3, model.nv))
-        mj.mj_jac(model, data, jac, None, contact.pos, int(model.geom_bodyid[geom]))
-        blocks.append(jac.T)
-        friction.append(float(min(contact.friction[:2])))
-        records.append({'geom': name, 'position_native': contact.pos.tolist(), 'mu': friction[-1]})
-    matrix = np.column_stack(blocks) if blocks else np.zeros((model.nv,0))
-    return matrix, np.asarray(friction), records, sorted(set(nonfoot))
 
 
 def _trial(body, transmission, initial, fmax, l0, duration, condition, fixed, deadline):
@@ -119,6 +94,7 @@ def run_study(out, *, duration=.25, wall_limit=240.):
               'biological_validation': False, 'walking_claimed': False,
               'CNS_executed': False, 'functional_gates_automatically_passed': [],
               'duration_s': duration, 'wall_limit_s': wall_limit,
+              'contact_semantics': CONTACT_SEMANTICS,
               'assumptions': ['LF muscle geometry transferred to all six legs.',
                 'Source maximum forces are transfer priors, not fitted biological measurements.',
                 'Dynamic trials prescribe tensions directly; neural and activation dynamics are bypassed.',
@@ -169,13 +145,9 @@ def run_study(out, *, duration=.25, wall_limit=240.):
         # All measured conditions start from the same settled geometry at zero velocity.
         d.qvel[:]=0.; d.qacc[:]=0.; d.qfrc_applied[:]=0.; mj.mj_forward(m,d)
         initial = body.state()
-        C,mu,contacts,nonfoot = contact_columns(m,d)
-        static = {'kind':'static_force_feasibility','feasible':False,
-                  'status':'not_eligible','foot_contacts':contacts,'nonfoot_contacts':nonfoot}
         limits = fmax*np.exp(-((d.ten_length/l0-1)/.5)**2)
-        if contacts and not nonfoot and np.all(limits>0):
-            static.update(solve_support(trans.matrix(d),C,d.qfrc_bias-d.qfrc_passive,limits,mu))
-            static['status']='feasible_at_tested_pose' if static['feasible'] else 'not_feasible_at_tested_pose'
+        static, support_arrays = evaluate_support(body,trans,limits)
+        arrays.update(support_arrays)
         result['static_support']=static
         trials=[]
         conditions=['passive','extensor_pulse','flexor_pulse','tonic_2pct']

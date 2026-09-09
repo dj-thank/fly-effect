@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import numpy as np
+from organism_core.contacts import is_active_contact
 
 def sustained_onsets(contacts,min_frames=5):
     counts=np.zeros(6,dtype=int)
@@ -53,7 +54,7 @@ def main():
         hit=set()
         for i in range(body.d.ncon):
             contact=body.d.contact[i]
-            if contact.dist>0:continue
+            if not is_active_contact(contact):continue
             names=[mj.mj_id2name(body.m,mj.mjtObj.mjOBJ_GEOM,int(g)) or '' for g in (contact.geom1,contact.geom2)]
             if 'ground_plane' not in names:continue
             name=names[1] if names[0]=='ground_plane' else names[0]
@@ -70,7 +71,7 @@ def main():
     result={'body_length_mm_from_core_mesh':body_length,'net_distance_mm':net,'body_lengths':net/body_length,
             'raw_contact_onsets':raw.tolist(),'sustained_contact_onsets':filtered.tolist(),
             'upright_fraction_after_settle':upright_fraction,'nonfoot_contact_fraction_after_settle':nonfoot_fraction,
-            'nonfoot_contact_frame_counts':nonfoot_geoms,'nonfoot_contact_scope':'Geometric contact at recorded qpos, not reconstructed contact force; excludes first200ms',
+            'nonfoot_contact_frame_counts':nonfoot_geoms,'nonfoot_contact_scope':'Constraint-active margin-aware contact at recorded qpos, not reconstructed contact force; excludes first200ms',
             'upright_definition':'Dorsal axis within 60deg of vertical for >=90% of frames after initial200ms; flat-ground diagnostic',
             'contact_filter':'5 consecutive 1ms contact frames and >=5ms release; diagnostic anti-chatter filter, not a gait controller',
             'checks':checks,'single_trial_criteria_met':all(checks.values()),'walking_passed':False,

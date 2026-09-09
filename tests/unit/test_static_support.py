@@ -49,3 +49,32 @@ def test_inputs_unchanged_and_residual_is_checked():
     result=solve_support(T,C,b,f,mu)
     for x,y in zip((T,C,b,f,mu),old):np.testing.assert_array_equal(x,y)
     assert result['feasible'] and result['maximum_scaled_residual']<1e-10
+
+
+def test_infeasibility_has_residual_diagnostic_not_success():
+    result=solve_support([[0]],[[0,0,1]],[-1],[1],[.5])
+    assert result['status']=='infeasible_under_declared_constraints'
+    nearest=result['nearest_balance']
+    assert not result['feasible'] and not nearest['is_feasible_solution']
+    assert nearest['minimum_scaled_balance_error']==pytest.approx(1.)
+    assert nearest['residual_native']==pytest.approx([1.])
+
+
+def test_solver_timeout_is_not_reported_as_infeasibility(monkeypatch):
+    from types import SimpleNamespace
+    import scipy.optimize
+    monkeypatch.setattr(scipy.optimize,'linprog',lambda *a,**k:
+        SimpleNamespace(status=1,message='time limit',success=False))
+    result=solve_support([[0]],[[0,0,1]],[1],[1],[.5])
+    assert result['status']=='inconclusive' and not result['feasible']
+    assert 'nearest_balance' not in result
+
+
+@pytest.mark.parametrize('values',[[np.nan,0.,0.,1.],[0.,0.,0.],[0.,0.,0.,np.inf]])
+def test_invalid_solver_solution_is_not_feasible(monkeypatch,values):
+    from types import SimpleNamespace
+    import scipy.optimize
+    monkeypatch.setattr(scipy.optimize,'linprog',lambda *a,**k:
+        SimpleNamespace(status=0,message='mock success',success=True,x=np.array(values)))
+    result=solve_support([[0]],[[0,0,1]],[1],[1],[.5])
+    assert result['status']=='invalid_solver_solution' and not result['feasible']

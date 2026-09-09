@@ -35,10 +35,14 @@ additional optimization variables. No neural or body parameter is modified.
                      bounds=bounds, method='highs', options={'time_limit': 10.})
     report = {'kind': 'static_force_feasibility', 'solver_status': int(result.status),
               'solver_message': str(result.message), 'solver_success': bool(result.success),
-              'feasible': False, 'biological_validation': False, 'walking_claimed': False,
+              'feasible': False, 'status': 'inconclusive', 'biological_validation': False, 'walking_claimed': False,
               'scope': 'One tested pose; bounded tensile forces and contact friction diamond only.'}
     if result.success:
-        x = result.x; forces = x[n:].reshape(k,3)
+        x = np.asarray(result.x, dtype=float)
+        if x.shape != (A.shape[1],) or not np.isfinite(x).all():
+            report['status'] = 'invalid_solver_solution'
+            return report
+        forces = x[n:].reshape(k,3)
         residual = A@x-b
         violations = [float(np.max(np.abs(residual)/scale)),
                       float(max(0., np.max(-x[:n]/limit))),
@@ -50,4 +54,25 @@ additional optimization variables. No neural or body parameter is modified.
                       equality_residual_native=residual.tolist(), row_scales_native=scale.tolist(),
                       maximum_scaled_residual=violations[0], maximum_constraint_violation=max(violations[1:]),
                       maximum_tension_fraction=float(np.max(x[:n]/limit)))
+        report['status'] = 'feasible' if report['feasible'] else 'residual_check_failed'
+    elif result.status == 2:
+        report['status'] = 'infeasible_under_declared_constraints'
+        # Minimize normalized balance error; never relabel this as feasibility.
+        normalized = A/scale[:,None]
+        upper = np.vstack((np.column_stack((inequalities, np.zeros(len(inequalities)))),
+                           np.column_stack((normalized, -np.ones(len(b)))),
+                           np.column_stack((-normalized, -np.ones(len(b))))))
+        nearest = linprog(np.r_[np.zeros(A.shape[1]), 1.], A_ub=upper,
+                          b_ub=np.r_[np.zeros(len(inequalities)), b/scale, -b/scale],
+                          bounds=bounds+[(0.,None)], method='highs', options={'time_limit':10.})
+        report['nearest_balance_solver_status'] = int(nearest.status)
+        if nearest.success and np.isfinite(nearest.x).all():
+            residual = A@nearest.x[:-1]-b
+            report['nearest_balance'] = {
+                'is_feasible_solution': False,
+                'minimum_scaled_balance_error': float(nearest.x[-1]),
+                'scaled_residual': (residual/scale).tolist(),
+                'residual_native': residual.tolist(),
+                'tensions_native': nearest.x[:n].tolist(),
+                'contact_forces_native': nearest.x[n:-1].reshape(k,3).tolist()}
     return report
