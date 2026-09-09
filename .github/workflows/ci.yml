@@ -4,9 +4,14 @@ on:
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: core-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
+    timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         python: ['3.11', '3.12']
@@ -19,7 +24,22 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install -e ".[dev,neural]"
-      - run: python -m pytest -q
+      - run: python -m pytest -q --junitxml=work/validation/junit.xml
       - run: python scripts/audit_release.py
       - run: python -m build
-
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-evidence-${{ matrix.os }}-py${{ matrix.python }}
+          path: work/validation/junit.xml
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Retain distributions for independent validation
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
