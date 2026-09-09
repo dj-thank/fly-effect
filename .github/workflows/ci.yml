@@ -59,8 +59,14 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -e ".[body]"
       - run: fly-effect doctor
-      - name: Probe the actual six-leg body without a neural dataset
-        run: fly-effect calibrate-body --out work/body-probe --duration 0.02 --wall-limit 120
+      - name: Probe every leg without a neural dataset
+        shell: bash
+        run: |
+          failed=0
+          for leg in lf lm lh rf rm rh; do
+            fly-effect calibrate-body --out "work/body-probe/$leg" --leg "$leg" --duration 0.02 --wall-limit 120 || failed=1
+          done
+          exit "$failed"
       - name: Retain mechanical evidence including failure receipts
         if: always()
         uses: actions/upload-artifact@v4

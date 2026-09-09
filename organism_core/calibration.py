@@ -73,6 +73,9 @@ The wall budget is checked between physics steps, not a hard OS timeout.
         body = Body(joint_profile, 'antagonist')
         result['body_sha256'] = body.digest
         result['model_source_hashes'] = body.model_source_hashes
+        result['joint_profile_parameters'] = body.joint_profile
+        result['mesh_hashes'] = [{'file_name': Path(path).name, 'sha256': digest}
+                                 for path, digest in sorted(body.asset_files.items())]
         result['units'] = UNIT_CONTRACT
         result['muscle_priors'] = PRIORS
         result['versions'] = {name: metadata.version(name) for name in ('numpy', 'mujoco', 'flygym')}
@@ -87,6 +90,8 @@ The wall budget is checked between physics steps, not a hard OS timeout.
             raise ValueError('Exactly one active knee pitch joint required')
         joint = matches[0]
         result['joint_name'] = body.active_joint_names[joint]
+        result['joint_qpos_index'] = int(body.active_qpos[joint])
+        result['joint_dof_index'] = int(body.active_dofs[joint])
         mj.mj_forward(body.m, body.d)
         physical = body.state()
         muscles = body.muscles.state()
@@ -126,10 +131,17 @@ The wall budget is checked between physics steps, not a hard OS timeout.
         arrays['times_s'] = np.arange(ticks + 1) * .0001
         differences = {name: float(np.max(np.abs(arrays[name + '_qvel'] - arrays['passive_qvel'])))
                        for name in ('positive', 'negative')}
-        checks = {'passive_has_no_active_muscle_force': controls['passive']['maximum_muscle_force_native'] == 0,
+        joint_dof = int(body.active_dofs[joint])
+        joint_differences = {name: float(np.max(np.abs(
+            arrays[name + '_qvel'][:, joint_dof] - arrays['passive_qvel'][:, joint_dof])))
+            for name in ('positive', 'negative')}
+        matched_starts = all(np.array_equal(arrays[name + suffix][0], arrays['passive' + suffix][0])
+                             for name in ('positive', 'negative') for suffix in ('_qpos', '_qvel'))
+        checks = {'identical_initial_physics': matched_starts,
+                  'passive_has_no_active_muscle_force': controls['passive']['maximum_muscle_force_native'] == 0,
                   'positive_pulse_has_positive_torque': controls['positive']['initial_torque_native'] > 0,
                   'negative_pulse_has_negative_torque': controls['negative']['initial_torque_native'] < 0,
-                  'both_pulses_change_velocity': all(value > 1e-12 for value in differences.values()),
+                  'both_pulses_change_selected_joint_velocity': all(value > 1e-12 for value in joint_differences.values()),
                   'no_solver_warnings': all(value['solver_warning_count'] == 0 for value in controls.values())}
         artifact = out / 'observation.npz'
         np.savez_compressed(artifact, **arrays)
@@ -138,6 +150,7 @@ The wall budget is checked between physics steps, not a hard OS timeout.
         result.update(status='completed' if all(checks.values()) else 'failed',
                       controls=controls, checks=checks,
                       velocity_difference_from_passive=differences,
+                      selected_joint_velocity_difference_rad_s=joint_differences,
                       observation={'file': artifact.name, 'sha256': observation_hash})
     except Exception as exc:
         result.update(status='failed', error_type=type(exc).__name__, error=str(exc),
