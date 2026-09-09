@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "proposed_not_implemented",
+  "status": "planned_issues_published_not_implemented",
   "ambition": "Realize life and consciousness in a computational substrate while investigating whether and under what conditions this is possible.",
   "functional_milestones": [
     "memory",
@@ -37,7 +37,8 @@
         "Pin paper revision, code revision, input units and weight orientation before execution.",
         "Compare rhythm and recruitment to the matching source data; do not equate this with six-leg walking.",
         "Keep the original full connectome unchanged and record CPU/time/memory budgets."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/3"
     },
     {
       "id": "FE-02",
@@ -48,7 +49,8 @@
         "Use recorded kinematics or an explicitly diagnostic teacher; no root-position forcing.",
         "Measure fore-aft contact impulse, stance slip, work, posture and net displacement.",
         "Direct torque-only success does not certify the muscle model; keep diagnostic controls out of final autonomous runs."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/4"
     },
     {
       "id": "FE-03",
@@ -60,7 +62,8 @@
         "Account for basal cost, activity cost and explicit restoration events without creating energy from negative work.",
         "Keep resource inputs and operator actions in a provenance log; verify split-run equivalence.",
         "Do not label a viability variable as proof of life."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/5"
     },
     {
       "id": "FE-04",
@@ -74,7 +77,8 @@
         "Motor decision code cannot read physiological scalars as an action lookup; operator telemetry may display them.",
         "Include state-fixed and interoceptive-path-cut controls with matched random streams.",
         "Treat unspecified peptide and receptor dynamics as assumptions, not measured physiology."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/6"
     },
     {
       "id": "FE-05",
@@ -89,7 +93,8 @@
         "Track consumed amount, availability and state change with an accounting balance.",
         "Use taste/ingestion pathway cuts and no-resource controls.",
         "Complete a mouth-actuation positive control before claiming embodied feeding."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/7"
     },
     {
       "id": "FE-06",
@@ -102,7 +107,8 @@
         "Compare paired, unpaired, plasticity-off and memory-reset conditions.",
         "Remove transient-state and testing-state differences when attributing an effect to memory.",
         "A saved log alone does not count as learned memory."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/8"
     },
     {
       "id": "FE-07",
@@ -120,7 +126,8 @@
         "Include memory-reset, state-fixed and modulation-cut controls.",
         "Use actual neural/body actions, not an odor-to-action lookup table.",
         "Separate short-lived adaptation from persistent associative effects."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/9"
     },
     {
       "id": "FE-08",
@@ -137,7 +144,8 @@
         "Compare live interoception with matched cuts and no-resource controls.",
         "Measure time within range, recovery and resource use; do not use an external destination command.",
         "Do not infer life or consciousness from passing this functional benchmark."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/10"
     },
     {
       "id": "FE-09",
@@ -154,7 +162,8 @@
         "Measure predictive avoidance and viability duration, including predeclared resource-risk trade-offs.",
         "Do not hardcode danger avoidance as the policy or automatically award a self-preservation flag.",
         "Self-maintenance remains inside the simulated world; pause, reset and shutdown remain under operator control."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/11"
     },
     {
       "id": "FE-10",
@@ -167,7 +176,8 @@
         "Do not add a universal consciousness score or a boolean that treats passing behavior tests as proof.",
         "Document what evidence would weaken each interpretation and how external review can challenge it.",
         "Mark this issue as an initial research protocol, not completion of the life/consciousness goal."
-      ]
+      ],
+      "issue_url": "https://github.com/dj-thank/fly-effect/issues/12"
     }
   ]
 }

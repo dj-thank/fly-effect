@@ -2,7 +2,7 @@
 
 **Small neural connections. Shared scientific understanding.**
 
-[日本語版](docs/README.ja.md) · [Getting started](docs/GETTING_STARTED.md) · [Contributing](CONTRIBUTING.md) · [Project status](docs/STATUS.md)
+[日本語版](docs/README.ja.md) · [Project overview & open work](docs/PROJECT_OVERVIEW.md) · [Getting started](docs/GETTING_STARTED.md) · [Contributing](CONTRIBUTING.md) · [Validation status](docs/STATUS.md)
 
 ![Fly Effect](docs/assets/fly-effect.svg)
 
