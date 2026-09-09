@@ -10,6 +10,10 @@ Fly Effect is an open research and engineering project exploring **interactions 
 
 We want small experiments driven by curiosity to become shared resources for education, basic science, simulation technology, and potential future benefits to medical research. Neuroscience, physics, software, visualization, translation, and replication all have a place here. We welcome people bringing different skills to a common question.
 
+## Long-term ambition
+
+We aim toward the realization of life and consciousness in a computational substrate, while investigating whether and under what conditions this is possible. Memory, homeostasis, and self-maintenance are milestones toward that ambition, not a replacement for it. This is a research goal, not a claim about the current software. [Research program](docs/ORGANISM_CAPABILITIES.md) · [日本語](docs/ORGANISM_CAPABILITIES.ja.md)
+
 ## What you can explore today
 
 | Area | Current scope |
@@ -42,7 +46,7 @@ The synthetic demo checks installation and checkpoint replay; it is not evidence
 - **Keep uncertainty visible.** Distinguish measurements, assumptions, unidentified elements, and untested claims. Share failures as useful knowledge.
 - **Respect computational resources.** Set time and memory budgets, and avoid unnecessary copies of large datasets or repeated computation.
 - **Make collaboration accessible.** Questions, translation, documentation, and tests are valuable contributions; expertise is not a prerequisite for participation.
-- **Work toward useful outcomes.** Develop tools that can benefit scientific understanding and people's lives, without claiming consciousness, complete biological reproduction, or clinical efficacy.
+- **Work toward useful outcomes.** Develop tools that can benefit scientific understanding and people's lives, without presenting unverified consciousness, complete biological reproduction, or clinical efficacy as established results.
 
 These are project governance principles, not additional field-of-use restrictions on the software license. See [our vision](docs/VISION.md).
 

@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "status": "proposed_not_implemented",
+  "ambition": "Realize life and consciousness in a computational substrate while investigating whether and under what conditions this is possible.",
+  "functional_milestones": [
+    "memory",
+    "homeostasis",
+    "self-maintenance"
+  ],
+  "original_f01_f16_preserved": true,
+  "biological_life_or_consciousness_established": false,
+  "development_seeds": [
+    0,
+    1,
+    2
+  ],
+  "acceptance_seeds": [
+    11,
+    23,
+    47,
+    89,
+    131
+  ],
+  "rules": [
+    "No behavioral milestone automatically certifies life or consciousness.",
+    "Preregister thresholds, duration, resource limits and controls before simulations.",
+    "Do not overwrite baseline graph weights; keep plastic changes separate.",
+    "Do not use external motor policies as final connectome-driven behavior."
+  ],
+  "tickets": [
+    {
+      "id": "FE-01",
+      "title": "Reproduce a published neural rhythm positive control",
+      "blocked_by": [],
+      "delivery": "Run a small published CPG reference with its real IDs, weights, units and timing, plus no-input and E1/E2-cut controls.",
+      "acceptance": [
+        "Pin paper revision, code revision, input units and weight orientation before execution.",
+        "Compare rhythm and recruitment to the matching source data; do not equate this with six-leg walking.",
+        "Keep the original full connectome unchanged and record CPU/time/memory budgets."
+      ]
+    },
+    {
+      "id": "FE-02",
+      "title": "Demonstrate propulsion feasibility of the exact muscle-body model",
+      "blocked_by": [],
+      "delivery": "Verify support, swing and propulsion using calibration drive on the exact body and muscle paths used by the research runtime.",
+      "acceptance": [
+        "Use recorded kinematics or an explicitly diagnostic teacher; no root-position forcing.",
+        "Measure fore-aft contact impulse, stance slip, work, posture and net displacement.",
+        "Direct torque-only success does not certify the muscle model; keep diagnostic controls out of final autonomous runs."
+      ]
+    },
+    {
+      "id": "FE-03",
+      "title": "Persist and account for physiological state in an experiment",
+      "blocked_by": [],
+      "delivery": "Run a bounded internal-state trajectory with energy, hydration, damage, fatigue and sleep pressure, expose its accounting to the operator, and resume it exactly.",
+      "acceptance": [
+        "Declare units, parameter sources and surrogate assumptions; reject nonfinite or impossible updates.",
+        "Account for basal cost, activity cost and explicit restoration events without creating energy from negative work.",
+        "Keep resource inputs and operator actions in a provenance log; verify split-run equivalence.",
+        "Do not label a viability variable as proof of life."
+      ]
+    },
+    {
+      "id": "FE-04",
+      "title": "Couple internal needs to declared neural inputs",
+      "blocked_by": [
+        "FE-03"
+      ],
+      "delivery": "Compare neural responses to the same external stimulus under different physiological states using explicit interoceptive or neuromodulatory mappings.",
+      "acceptance": [
+        "Record actual target neuron IDs and confidence of each mapping.",
+        "Motor decision code cannot read physiological scalars as an action lookup; operator telemetry may display them.",
+        "Include state-fixed and interoceptive-path-cut controls with matched random streams.",
+        "Treat unspecified peptide and receptor dynamics as assumptions, not measured physiology."
+      ]
+    },
+    {
+      "id": "FE-05",
+      "title": "Connect ingestion actions to energy and water recovery",
+      "blocked_by": [
+        "FE-03",
+        "FE-04"
+      ],
+      "delivery": "In a controlled feeding scene, neural/motor ingestion events transfer food or water into the internal-state model.",
+      "acceptance": [
+        "Contact alone does not restore resources; require an evidenced ingestion action.",
+        "Track consumed amount, availability and state change with an accounting balance.",
+        "Use taste/ingestion pathway cuts and no-resource controls.",
+        "Complete a mouth-actuation positive control before claiming embodied feeding."
+      ]
+    },
+    {
+      "id": "FE-06",
+      "title": "Retain an association through sparse local plasticity",
+      "blocked_by": [],
+      "delivery": "Condition one identified mushroom-body compartment and retain an association after washout and checkpoint restoration.",
+      "acceptance": [
+        "Whitelist actual KC-to-MBON edges and declared DAN modulation; preserve raw graph IDs and baseline weights.",
+        "Store sparse eligibility and memory deltas with bounds and no unintended sign flips.",
+        "Compare paired, unpaired, plasticity-off and memory-reset conditions.",
+        "Remove transient-state and testing-state differences when attributing an effect to memory.",
+        "A saved log alone does not count as learned memory."
+      ]
+    },
+    {
+      "id": "FE-07",
+      "title": "Demonstrate state-dependent retrieval of food and water associations",
+      "blocked_by": [
+        "FE-01",
+        "FE-02",
+        "FE-04",
+        "FE-05",
+        "FE-06"
+      ],
+      "delivery": "Show how the same learned cues affect approach or ingestion differently under hunger and thirst.",
+      "acceptance": [
+        "Test learned associations under matched histories and explicitly controlled physiological states.",
+        "Include memory-reset, state-fixed and modulation-cut controls.",
+        "Use actual neural/body actions, not an odor-to-action lookup table.",
+        "Separate short-lived adaptation from persistent associative effects."
+      ]
+    },
+    {
+      "id": "FE-08",
+      "title": "Maintain viable internal ranges in held-out environments",
+      "blocked_by": [
+        "FE-01",
+        "FE-02",
+        "FE-04",
+        "FE-05"
+      ],
+      "delivery": "Maintain declared energy and hydration ranges through neural-driven behavior in environments not used for calibration.",
+      "acceptance": [
+        "Preregister viable ranges, duration, held-out seeds and effect-size thresholds before trials.",
+        "Compare live interoception with matched cuts and no-resource controls.",
+        "Measure time within range, recovery and resource use; do not use an external destination command.",
+        "Do not infer life or consciousness from passing this functional benchmark."
+      ]
+    },
+    {
+      "id": "FE-09",
+      "title": "Test learned self-maintenance and divergent individual histories",
+      "blocked_by": [
+        "FE-06",
+        "FE-07",
+        "FE-08"
+      ],
+      "delivery": "Train matched A/B instances with different cue outcomes, restore them into controlled test conditions, and compare learned hazard avoidance and viability.",
+      "acceptance": [
+        "Keep initial graph/model constant; isolate memory from current energy, hydration, damage and random-state differences.",
+        "Compare naive, sham, unpaired, memory-reset and pathway-cut controls.",
+        "Measure predictive avoidance and viability duration, including predeclared resource-risk trade-offs.",
+        "Do not hardcode danger avoidance as the policy or automatically award a self-preservation flag.",
+        "Self-maintenance remains inside the simulated world; pause, reset and shutdown remain under operator control."
+      ]
+    },
+    {
+      "id": "FE-10",
+      "title": "Establish a life and consciousness research evidence framework",
+      "blocked_by": [],
+      "delivery": "Publish the project's explicit realization ambition, competing definitions/theories, measurable indicators, counterevidence and limits of interpretation.",
+      "acceptance": [
+        "Retain life and consciousness as long-term goals rather than replacing them with behavioral milestones.",
+        "Separate functional tests, theory-dependent indicators and claims of actual realization.",
+        "Do not add a universal consciousness score or a boolean that treats passing behavior tests as proof.",
+        "Document what evidence would weaken each interpretation and how external review can challenge it.",
+        "Mark this issue as an initial research protocol, not completion of the life/consciousness goal."
+      ]
+    }
+  ]
+}
