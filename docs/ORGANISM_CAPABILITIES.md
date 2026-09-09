@@ -52,11 +52,10 @@ Self-maintenance concerns behavior inside the simulated environment. Pause, rese
 
 ## Implementation sequence
 
-The [machine-readable program](../specs/organism-program.json) contains ten proposed vertical slices and blocking edges. The existing CPG and exact-body positive controls remain foundational. Internal-state accounting and local memory can be developed as bounded component studies while those foundations are established. Embodied claims wait for the corresponding neural and physical prerequisites.
+The [machine-readable program](../specs/organism-program.json) contains ten planned vertical slices, published issue links and blocking edges. See the [project overview](PROJECT_OVERVIEW.md) for navigation. The existing CPG and exact-body positive controls remain foundational. Internal-state accounting and local memory can be developed as bounded component studies while those foundations are established. Embodied claims wait for the corresponding neural and physical prerequisites.
 
 Modules such as metabolism, interoception, neuromodulation, plasticity and ecology are possible implementation seams, not six independent features to add blindly. Each slice must demonstrate a causal end-to-end result at its stated scope.
 
 The current MaleCNS graph already includes brain and nerve cord. FlyWire and BANC findings are useful references, not interchangeable cell IDs or a reason to silently switch datasets. [Brain-and-cord research](https://www.nature.com/articles/s41586-026-10735-w)
 
 The next step is to turn the reviewed slices into issues and implement their measurable tests. No new memory, homeostasis, self-maintenance, life or consciousness capability is certified by this document.
-

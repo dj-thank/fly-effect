@@ -1,5 +1,7 @@
 # Fly Effect
 
+[プロジェクト全体像・公開Issue](PROJECT_OVERVIEW.ja.md)
+
 **小さな神経のつながりから、大きな理解へ。**
 
 [English](../README.md) · [はじめる](GETTING_STARTED.md) · [参加する](../CONTRIBUTING.md) · [現在地](STATUS.md)
@@ -70,4 +72,3 @@ Python 3.11以上を用意し、このリポジトリで実行します。
 独自コードのライセンスは[MIT](../LICENSE)です。外部コード・データ・モデル資産はそれぞれのライセンスに従います。EonのGPLバックエンドや外部の生物データ・メッシュを、このリポジトリのMITへ付け替えて配布しません。
 
 Shiuらの神経モデル、MaleCNS、NeuroMechFly/FlyGym、FlyMimic、CPG・運動制御の研究に学んでいます。各研究チームの公式プロジェクトではありません。[出典・第三者表記](../THIRD_PARTY_NOTICES.md)
-
