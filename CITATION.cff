@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "Please cite Fly Effect and the original models and datasets used in your experiment. This pre-alpha is not a validated biological reproduction."
+title: "Fly Effect"
+type: software
+version: 0.1.0a0
+authors:
+  - name: "Fly Effect contributors"
+license: MIT

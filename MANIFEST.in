@@ -1,5 +1,5 @@
 include *.md *.py *.json
-include LICENSE pyproject.toml
+include LICENSE pyproject.toml CITATION.cff
 recursive-include licenses *.txt
 recursive-include organism_core *.json
 recursive-include docs *.md *.svg

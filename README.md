@@ -59,7 +59,7 @@ Python 3.11以上を用意し、このリポジトリで実行します。
 
 バグの再現、文書の改善、小規模モデル、単位・座標のレビュー、可視化、翻訳を歓迎します。大きな実験や設計変更はIssueで仮説と計算予算を共有してください。
 
-[貢献ガイド](CONTRIBUTING.md) · [行動規範](CODE_OF_CONDUCT.md) · [運営](GOVERNANCE.md) · [セキュリティ](SECURITY.md)
+[最初の貢献](docs/FIRST_CONTRIBUTIONS.md) · [貢献ガイド](CONTRIBUTING.md) · [行動規範](CODE_OF_CONDUCT.md) · [運営](GOVERNANCE.md) · [セキュリティ](SECURITY.md)
 
 ## 出典とライセンス
 

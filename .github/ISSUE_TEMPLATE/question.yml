@@ -1,0 +1,11 @@
+name: Question / 質問・参加相談
+description: 専門分野や経験を問わず質問する
+title: '[Question] '
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: 知りたいこと・試してみたいこと
+      description: 日本語・英語どちらでも構いません。個人情報や認証情報は書かないでください。
+    validations:
+      required: true
