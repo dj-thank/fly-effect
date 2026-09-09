@@ -31,6 +31,9 @@ def main():
         command='from organism_core.tendon_study import run_study; import sys; run_study(sys.argv[1],duration=float(sys.argv[2]))'
         subprocess.run([sys.executable,'-c',command,str(workspace/'study'),str(args.duration)],
                        cwd=root,env=env,check=True,timeout=300)
+        command='from organism_core.pose_probe import run_pose_probe; import sys; run_pose_probe(sys.argv[1],sys.argv[2])'
+        subprocess.run([sys.executable,'-c',command,str(workspace/'pose-study'),str(workspace/'study')],
+                       cwd=root,env=env,check=True,timeout=180)
     except Exception as exc:
         (workspace/'pipeline-failure.json').write_text(json.dumps(
             {'status':'failed','error_type':type(exc).__name__,'error':str(exc),

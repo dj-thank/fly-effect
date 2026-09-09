@@ -97,6 +97,7 @@ jobs:
           name: ninety-tendon-study
           path: |
             work/tendon-study/study/
+            work/tendon-study/pose-study/
             work/tendon-study/*.log
             work/tendon-study/pipeline-failure.json
             work/tendon-study/runs/source-tendon-audit/results.json
