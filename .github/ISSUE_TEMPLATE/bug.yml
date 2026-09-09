@@ -1,0 +1,19 @@
+name: Bug / 再現しない結果
+description: 最小手順で問題を報告する
+title: '[Bug] '
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 期待と実際の結果
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順と環境
+      description: OS、Python、commit、最小コマンド。秘密情報や患者情報を入れないでください。
+    validations:
+      required: true
+

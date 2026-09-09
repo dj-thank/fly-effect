@@ -1,0 +1,12 @@
+{
+  "dataset": "male-cns:v1.0",
+  "neurons": 166700,
+  "edges": 25582938,
+  "files": {
+    "edges.bin": "45233dbc6a67b676bdf5a6b1ee0fc206bea5eae66074f92a09efcbb56aef89d5",
+    "body_ids.npy": "ab90597b7b0ce07cbc22cb39a65b70bea2ac73cc7fd225951bd9d73f2fc8dd3f",
+    "motor_indices.npy": "c3c933eb266c3af50e77e1e43f922b73ffdeae00ba74f87cda54e5ee62a32774",
+    "glutamate_inhibitory_hypothesis_signs.npy": "8761a283602b74d66bc7cbe910fbfbcc06da5810e58e306881533eb1fb23b3c4",
+    "neurons.parquet": "5f6ddd7cae5fabd7fa12dc69010ca9be933063460d4ae57d94ad23a7df8b505f"
+  }
+}

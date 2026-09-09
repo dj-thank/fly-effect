@@ -1,0 +1,23 @@
+name: Research / 研究提案
+description: 小さく検証できる仮説
+title: '[Research] '
+body:
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: 問い・仮説・根拠
+    validations:
+      required: true
+  - type: textarea
+    id: experiment
+    attributes:
+      label: 最小実験と反証条件
+    validations:
+      required: true
+  - type: textarea
+    id: resources
+    attributes:
+      label: データ・ライセンス・時間・メモリの上限
+    validations:
+      required: true
+

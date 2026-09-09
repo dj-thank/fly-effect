@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="title desc">
+<title id="title">Fly Effect</title><desc id="desc">An original diagram of connected neurons, a body model, and an environment forming a feedback loop.</desc>
+<rect width="1200" height="320" rx="24" fill="#111b26"/>
+<g stroke="#60c4ad" stroke-width="3" fill="none" opacity=".7"><path d="M90 160L155 90L225 170L155 230L90 160M155 90L155 230M225 170L300 115M225 170L300 240"/></g>
+<g fill="#8be3ce"><circle cx="90" cy="160" r="11"/><circle cx="155" cy="90" r="13"/><circle cx="225" cy="170" r="15"/><circle cx="155" cy="230" r="9"/><circle cx="300" cy="115" r="11"/><circle cx="300" cy="240" r="8"/></g>
+<path d="M345 160H475M700 160H830M915 233Q600 335 190 267" fill="none" stroke="#8195b2" stroke-width="3"/>
+<g fill="#223a49" stroke="#8be3ce" stroke-width="3"><ellipse cx="588" cy="164" rx="54" ry="33"/><circle cx="645" cy="160" r="23"/><ellipse cx="574" cy="117" rx="45" ry="18" transform="rotate(-22 574 117)"/><ellipse cx="574" cy="211" rx="45" ry="18" transform="rotate(22 574 211)"/></g>
+<g stroke="#8be3ce" stroke-width="3" fill="none"><path d="M574 153L525 119L488 126M593 149L584 85L548 66M618 151L656 100L691 104M574 174L525 208L488 201M593 179L584 244L548 261M618 173L656 223L691 219"/></g>
+<rect x="865" y="98" width="190" height="124" rx="12" fill="#223a49" stroke="#8195b2" stroke-width="2"/>
+<path d="M882 204L929 157L965 185L1006 129L1038 166" fill="none" stroke="#e8c47f" stroke-width="3"/>
+<g fill="#eaf4f5" font-family="sans-serif" text-anchor="middle"><text x="200" y="46" font-size="22">NEURAL CIRCUITS</text><text x="592" y="46" font-size="22">BODY</text><text x="960" y="46" font-size="22">ENVIRONMENT</text><text x="1080" y="285" font-size="18">Fly Effect</text></g></svg>
+

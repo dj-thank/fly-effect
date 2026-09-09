@@ -1,0 +1,176 @@
+{
+  "schema": 1,
+  "kind": "functional_not_biological",
+  "gates": [
+    {
+      "id": "F01",
+      "name": "起動・保存・再開",
+      "requires": [],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F02",
+      "name": "全CNS計算",
+      "requires": [],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F03",
+      "name": "六脚身体と環境",
+      "requires": [],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F04",
+      "name": "神経と筋肉の接続",
+      "requires": [
+        "F02",
+        "F03"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F05",
+      "name": "固有感覚ループ",
+      "requires": [
+        "F02",
+        "F03"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F06",
+      "name": "自律歩行",
+      "requires": [
+        "F04",
+        "F05"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F07",
+      "name": "旋回・停止",
+      "requires": [
+        "F06"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F08",
+      "name": "因果性",
+      "requires": [
+        "F06"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F09",
+      "name": "視覚反応",
+      "requires": [
+        "F07",
+        "F08"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F10",
+      "name": "嗅覚反応",
+      "requires": [
+        "F07",
+        "F08"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F11",
+      "name": "摂食",
+      "requires": [
+        "F04",
+        "F08"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F12",
+      "name": "内部状態",
+      "requires": [
+        "F02"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F13",
+      "name": "学習",
+      "requires": [
+        "F10",
+        "F12"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F14",
+      "name": "飛行",
+      "requires": [
+        "F04",
+        "F08"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F15",
+      "name": "行動の切り替え",
+      "requires": [
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F14"
+      ],
+      "status": "NOT_VERIFIED"
+    },
+    {
+      "id": "F16",
+      "name": "操作・録画・配布",
+      "requires": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15"
+      ],
+      "status": "NOT_VERIFIED"
+    }
+  ],
+  "development_seeds": [
+    0,
+    1,
+    2
+  ],
+  "acceptance_seeds": [
+    11,
+    23,
+    47,
+    89,
+    131
+  ],
+  "required_successes": 4,
+  "walking_duration_s": 3,
+  "walking_body_lengths": 3,
+  "per_leg_contact_onsets": 3,
+  "stop_speed_reduction": 0.8,
+  "flight_duration_s": 5,
+  "flight_airborne_s": 2,
+  "real_time_required": false,
+  "reference_biology_percent": 35,
+  "functional_percent": 0
+}

@@ -1,0 +1,15 @@
+include *.md *.py *.json
+include LICENSE pyproject.toml
+recursive-include licenses *.txt
+recursive-include organism_core *.json
+recursive-include docs *.md *.svg
+recursive-include scripts *.py
+recursive-include examples *.json
+recursive-include tests *.py
+recursive-include .github *.yml *.md
+prune work
+prune runs
+prune data
+prune cache
+prune .venv
+global-exclude *.py[cod] __pycache__

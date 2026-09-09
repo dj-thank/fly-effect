@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "kind": "synthetic",
+  "status": "planned",
+  "question": "Does the checkpoint restore a delayed synthetic neural response?",
+  "hypothesis": "Continuation after restoration matches uninterrupted execution.",
+  "sources": [],
+  "seed": 0,
+  "units": {
+    "time": "s",
+    "voltage": "mV"
+  },
+  "budget": {
+    "wall_seconds": 60,
+    "memory_mib": 512
+  },
+  "controls": [
+    "uninterrupted",
+    "restored"
+  ],
+  "success_criterion": "Identical spike IDs/times and final state.",
+  "falsification": "Any mismatch.",
+  "evidence": [],
+  "biological_validation": false
+}
+
