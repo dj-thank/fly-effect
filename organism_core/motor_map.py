@@ -3,7 +3,6 @@ from pathlib import Path
 import hashlib
 import json
 import numpy as np
-import pandas as pd
 
 # Axis/sign choices are engineering hypotheses, NOT identified muscle insertions.
 # The scalar sign describes native joint angle; anatomy calibration remains pending.
@@ -23,6 +22,7 @@ TARGETS={
 class MotorMap:
     def __init__(self,ids,motor_indices,joint_names,inference_path=None):
         from .config import DATA
+        import pandas as pd
         root=DATA.parent
         annotation=DATA/'graph/neurons.parquet'
         table=DATA/'manc-supplements/elife-96084-supp3-v1.csv'
@@ -81,6 +81,8 @@ class MotorMap:
                 record.update(status='connectivity_inferred_mechanical_transfer',source_basis='same_leg_incoming_connectivity_prior',
                               joint=donor['joint'],muscle_polarity=donor['muscle_polarity'],inferred_from_body_id=donor['body_id'])
             self.source_hashes[str(inference_path.resolve())]=hashlib.sha256(inference_path.read_bytes()).hexdigest()
+        # The mapping is immutable after construction. Avoid scanning rows per spike.
+        self._required_by_index={r['internal_index']:r['required_for_walking'] for r in self.rows}
         self.pool_sizes=np.maximum(self.pool_sizes,1)
         self.outside_spikes=0;self.unresolved_spikes=0;self.mapped_spikes=0
         self.per_motor_spikes={int(i):0 for i in motor_indices}
@@ -93,8 +95,7 @@ class MotorMap:
             if index in self.assignments:
                 j,pol=self.assignments[index];counts[j,pol]+=1;self.mapped_spikes+=1
             else:
-                rec=next(r for r in self.rows if r['internal_index']==index)
-                if rec['required_for_walking']:self.unresolved_spikes+=1
+                if self._required_by_index[index]:self.unresolved_spikes+=1
                 else:self.outside_spikes+=1
         return counts
 

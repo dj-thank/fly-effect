@@ -14,3 +14,4 @@ prune cache
 prune .venv
 global-exclude *.py[cod] __pycache__
 recursive-include specs *.json
+include docs/integration-manifest.json
