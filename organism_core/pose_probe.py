@@ -9,6 +9,7 @@ import time
 import numpy as np
 import mujoco as mj
 from .contacts import is_active_contact
+from .force_audit import audit_static_forces
 from .support_diagnostics import contact_columns, evaluate_support, LEGS
 
 
@@ -116,6 +117,12 @@ not stable dynamic support, autonomous walking, or a biological calibration.
             report, inputs = evaluate_support(probe,transmission,limits)
             prefix = f'pose_{row["index"]:02d}_'
             arrays.update({prefix+k:v for k,v in inputs.items()})
+            budget, forces = audit_static_forces(m, chosen)
+            if not budget['passed']: raise ValueError('Pose force accounting failed')
+            if not np.allclose(forces['support_target'], inputs['support_target'], rtol=1e-12, atol=1e-12):
+                raise ValueError('Pose support target differs from force accounting')
+            row['force_accounting'] = budget
+            arrays.update({prefix+'force_'+k:v for k,v in forces.items()})
             row.update(status=report['status'],selected_depth_native=depth,support=report,
                        active_ground_loads=ground_contacts(m,d))
             rows.append(row)
@@ -175,7 +182,14 @@ are recomputed at zero velocity/zero applied force, not replayed historic forces
         result['recorded_pose_loads']=ground_contacts(m,d)
         result['recorded_target_reproduced']=True
         before=body.state()
-        scan,arrays=scan_initial_poses(body,trans,q0,fmax,l0,deadline=deadline)
+        budget,forces=audit_static_forces(m,recorded)
+        result['recorded_force_accounting']=budget
+        arrays.update({'recorded_force_'+k:v for k,v in forces.items()})
+        if not budget['passed']:raise ValueError('Recorded force accounting failed')
+        if not np.allclose(forces['support_target'],target,rtol=1e-12,atol=1e-12):
+            raise ValueError('Recorded target differs from force accounting')
+        scan,pose_arrays=scan_initial_poses(body,trans,q0,fmax,l0,deadline=deadline)
+        arrays.update(pose_arrays)
         if not np.array_equal(before,body.state()):raise ValueError('Pose scan mutated source state')
         result['source_state_unchanged']=True;result['scan']=scan
         result['code_sha256']=hashlib.sha256(b''.join(p.name.encode()+p.read_bytes()

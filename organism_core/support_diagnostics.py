@@ -4,6 +4,7 @@ import numpy as np
 import mujoco as mj
 from .contacts import is_active_contact
 from .static_support import solve_support
+from .force_audit import require_unforced_static_state
 
 LEGS = ('lf', 'lm', 'lh', 'rf', 'rm', 'rh')
 CONTACT_SEMANTICS = 'constraint_active: efc_address >= 0 and exclude == 0'
@@ -53,8 +54,7 @@ Call after mj_forward with zero qvel. No controller or biological status is set.
 Ineligible geometry, proved LP infeasibility and solver failure stay distinct.
 """
     m, d = body.m, body.d
-    if np.any(d.qvel != 0):
-        raise ValueError('Static support requires zero velocity')
+    require_unforced_static_state(d)
     C, mu, contacts, nonfoot = contact_columns(m, d)
     T = transmission.matrix(d)
     target = d.qfrc_bias - d.qfrc_passive

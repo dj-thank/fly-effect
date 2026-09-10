@@ -93,3 +93,20 @@ def test_recorded_pose_constraint_reconstruction_needs_no_force_solver():
     body, _ = active_and_gap()
     mj.mj_fwdPosition(body.m,body.d)
     assert is_active_contact(body.d.contact[0])
+
+
+@pytest.mark.parametrize('field', ['qfrc_applied', 'xfrc_applied', 'qfrc_actuator'])
+def test_static_support_rejects_omitted_external_and_actuator_forces(field):
+    body = make_body(.005)
+    getattr(body.d, field).flat[0] = 1.
+    with pytest.raises(ValueError, match=field):
+        evaluate_support(body, None, np.ones(1))
+
+
+@pytest.mark.parametrize('field', ['qpos', 'qvel', 'qfrc_bias', 'qfrc_passive',
+                                    'qfrc_applied', 'xfrc_applied', 'qfrc_actuator'])
+def test_static_support_rejects_nonfinite_inputs_before_solving(field):
+    body = make_body(.005)
+    getattr(body.d, field).flat[0] = np.nan
+    with pytest.raises(ValueError, match='finite'):
+        evaluate_support(body, None, np.ones(1))
