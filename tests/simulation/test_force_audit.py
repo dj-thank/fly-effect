@@ -115,7 +115,8 @@ def test_report_and_arrays_are_serializable(tmp_path):
 
 
 def test_gravity_compensation_is_not_mislabelled_as_contact_support():
-    m = model(); m.body_gravcomp[1] = .25
+    # Compile the declared parameter so MuJoCo initializes gravcomp feature flags.
+    m = mj.MjModel.from_xml_string(XML.replace('name="fly"', 'name="fly" gravcomp=".25"'))
     report, arrays = audit_static_forces(m, m.qpos0)
     assert report['passed']
     assert arrays['qfrc_gravcomp'][2] == pytest.approx(4.905)
