@@ -34,6 +34,9 @@ jobs:
       - run: python -m pip install -e ".[body,mechanics]"
       - name: Independently bounded leg placement and root/full support gates
         run: python scripts/run_foot_placement_study.py --workspace work/foot-placement
+      - name: Reverify inputs and isolate passive-load conflicts
+        timeout-minutes: 3
+        run: python -m organism_core.support_conflict --workspace work/foot-placement
       - name: Retain raw evidence and failures, never meshes or XML assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,6 +49,7 @@ jobs:
             work/foot-placement/*.log
             work/foot-placement/foot-placement/*.json
             work/foot-placement/foot-placement/*.npz
+            work/foot-placement/passive-conflict/*.json
             work/foot-placement/source-study/*.json
             work/foot-placement/source-study/*.npz
             work/foot-placement/runs/source-tendon-audit/results.json
