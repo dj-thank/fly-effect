@@ -1,0 +1,52 @@
+name: FE-02 bounded foot placement
+on:
+  pull_request:
+    paths:
+      - 'organism_core/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'transfer*_tendons.py'
+      - 'audit_source_tendons.py'
+      - 'pyproject.toml'
+      - 'examples/fe02-foot-placement.json'
+      - '.github/workflows/foot-placement.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: foot-placement-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contact-placement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e ".[body,mechanics]"
+      - name: Independently bounded leg placement and root/full support gates
+        run: python scripts/run_foot_placement_study.py --workspace work/foot-placement
+      - name: Retain raw evidence and failures, never meshes or XML assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe02-foot-placement-evidence
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            work/foot-placement/*.json
+            work/foot-placement/*.log
+            work/foot-placement/foot-placement/*.json
+            work/foot-placement/foot-placement/*.npz
+            work/foot-placement/source-study/*.json
+            work/foot-placement/source-study/*.npz
+            work/foot-placement/runs/source-tendon-audit/results.json
+            work/foot-placement/runs/six-leg-tendon-candidate/results.json
