@@ -1,5 +1,6 @@
 """Existing NeuroMechFly free six-leg plant, with no movement controller."""
 from .config import HOME
+from .contacts import is_active_contact
 import hashlib
 import numpy as np
 import mujoco as mj
@@ -134,6 +135,7 @@ class Body:
         reaction=np.zeros(3)
         for i in range(self.d.ncon):
             contact=self.d.contact[i]
+            if not is_active_contact(contact):continue
             names=[mj.mj_id2name(self.m,mj.mjtObj.mjOBJ_GEOM,g) or '' for g in (contact.geom1,contact.geom2)]
             if 'ground_plane' not in names:continue
             ground_first=names[0]=='ground_plane';other=names[1 if ground_first else 0]
@@ -147,6 +149,7 @@ class Body:
         legs=('lf','lm','lh','rf','rm','rh');forces=np.zeros((6,3))
         for i in range(self.d.ncon):
             contact=self.d.contact[i]
+            if not is_active_contact(contact):continue
             names=[mj.mj_id2name(self.m,mj.mjtObj.mjOBJ_GEOM,int(g)) or '' for g in (contact.geom1,contact.geom2)]
             if 'ground_plane' not in names:continue
             first=names[0]=='ground_plane';other=names[1 if first else 0]
