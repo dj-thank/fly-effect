@@ -1,23 +1,39 @@
 name: Research / 研究提案
-description: 小さく検証できる仮説
+description: 一つの判断につながる、予算を固定した比較実験
 title: '[Research] '
 body:
   - type: textarea
     id: hypothesis
     attributes:
       label: 問い・仮説・根拠
+      description: どの阻害要因を解消し、結果に応じて何を決めますか。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 基点・依存関係・変更範囲
+      description: 対象SHA、依存Issue/PR、変更するものと固定するもの。担当・ブランチ・ファイル範囲は着手時にコメントで共有してください。
     validations:
       required: true
   - type: textarea
     id: experiment
     attributes:
-      label: 最小実験と反証条件
+      label: 最小実験・対照・反証条件
+      description: examples/experiment.jsonを再利用。成功、不成立、時間切れ・環境不足の場合それぞれの次の判断を記載します。計画を実行済みとしないでください。
     validations:
       required: true
   - type: textarea
     id: resources
     attributes:
       label: データ・ライセンス・時間・メモリの上限
+      description: 単位・seed・計測と停止方法も実行前に固定。新規サービスや予算増額を暗黙に含めないでください。
     validations:
       required: true
-
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 証拠と終了条件
+      description: 出力先、再現コマンド、保存するハッシュ、第三者の再確認方法。未取得の証拠は未取得と記載します。
+    validations:
+      required: true

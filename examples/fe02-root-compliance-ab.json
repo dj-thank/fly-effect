@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "kind": "organism_candidate",
+  "status": "planned",
+  "experiment_id": "FE-02-root-compliance-ab-v1",
+  "question": "What changes when inherited root stiffness and damping are excluded from the exact 90-tendon body?",
+  "hypothesis": "Removing the inherited free-root spring/damper removes that artificial anchoring. Whether foot-only support improves is a separate open question.",
+  "sources": [
+    "https://github.com/dj-thank/fly-effect/issues/4#issuecomment-5611789531",
+    "https://github.com/dj-thank/fly-effect/blob/eb164fa4732e45b4542070aa225df3cf3080efb2/docs/FORCE_ACCOUNTING.md",
+    "https://github.com/dj-thank/fly-effect/pull/14#issuecomment-5611740128"
+  ],
+  "baseline_commit": "eb164fa4732e45b4542070aa225df3cf3080efb2",
+  "integration_dependency": "PR #14 diagnostics; use the pinned revision or an explicitly reviewed equivalent, not main by assumption.",
+  "seed": 0,
+  "units": {
+    "time": "s",
+    "force": "native model force units; not animal-calibrated SI forces",
+    "position": "native model length units"
+  },
+  "budget": {
+    "wall_seconds": 600,
+    "memory_mib": 8192
+  },
+  "budget_scope": "Proposed outer ceiling for the paired study, excluding dependency installation. Not a measurement or an already-enforced runner feature. Enforce/verify before execution; do not automatically raise on failure.",
+  "inherited_stage_limits": {
+    "pose_wall_seconds": 120,
+    "pose_max_wall_seconds": 300,
+    "pose_subprocess_timeout_seconds": 180,
+    "fixed_pose_count": 9,
+    "fixed_contact_depth_count": 5,
+    "dynamic_duration_seconds": 0.25
+  },
+  "controls": [
+    "legacy_anchored",
+    "unanchored_root_candidate"
+  ],
+  "intervention": {
+    "legacy_anchored": "Rebuild and verify the pinned body: root stiffness 0.4, six root damping entries 0.02.",
+    "unanchored_root_candidate": "Explicitly derive a body with root stiffness and all root damping entries zero; preserve limb compliance. Source XML/assets remain untouched.",
+    "held_constant": [
+      "root armature 1e-6 and frictionloss 0",
+      "mass and inertia",
+      "limb parameters",
+      "tendon paths and force bounds",
+      "initial pose/grid/contact depths",
+      "solver settings and tolerances",
+      "neural IDs/edges/weights",
+      "ACCEPTANCE.json"
+    ],
+    "interpretation": "Spring and damping are a declared combined treatment. Do not attribute all dynamic differences to either component alone. A later component-isolation study must be preregistered separately."
+  },
+  "protocol": [
+    "Before simulation, record candidate source SHA, environment, model/source asset/receipt hashes, and exact protected-file hashes. Use separate new workspaces and model identities for A and B.",
+    "Rebuild tendon-candidate receipts. Audit compiled root/limb parameters and the unchanged source assets; never patch a compiled model silently or force old checkpoint restoration.",
+    "Add analytic no-contact root translation and nonzero-velocity controls; isolate spring/damper components rather than expecting gravity or total force to vanish. Legacy must retain its measured response and candidate must lack those root components.",
+    "Run the same preregistered recorded pose, nine fixed placements, five contact depths and bounded dynamic controls for both variants. Preserve inherited force-accounting tolerances: gravity abs/rel 1e-10, passive absolute 1e-10, scaled dynamic residual 1e-9, source target abs/rel 1e-12.",
+    "Retain force budgets, full finite observations, foot/non-foot contacts, support target/LP status, warnings and elapsed/resource measurements for both variants, including failures.",
+    "Compare paired results and independently verify the specific claims. Do not close FE-02 or claim standing/walking from this comparison."
+  ],
+  "success_criterion": "Engineering gate only: declared root intervention and all invariants verified, analytic controls pass, and paired finite force/support observations are reproducible. Support feasibility is a separately reported endpoint, not a condition to hide an otherwise valid negative finding.",
+  "falsification": "Any unexplained model/parameter difference, failed legacy reproduction, residual inherited root spring/damper, force-accounting failure or invalid observation defeats the engineering comparison. Zero feasible poses is a valid negative endpoint only when comparison validity is established.",
+  "decision_table": {
+    "invalid_comparison": "Repair measurement/provenance first; no support-capability conclusion.",
+    "valid_zero_feasible": "Keep the corrected-model result and legacy control; test a separately preregistered front/middle/rear foot-placement or force-direction hypothesis. Do not infer impossibility outside this fixed grid.",
+    "valid_feasible_pose": "Proceed to a separate bounded dynamic hold protocol on the same muscle-body variant. Static feasibility does not certify stable standing.",
+    "timeout_or_missing_dependency": "Record inconclusive or blocked respectively; do not count as physical infeasibility."
+  },
+  "evidence": [],
+  "biological_validation": false,
+  "implementation_status": "not_implemented_by_this_plan",
+  "scientific_outcome": "not_run",
+  "before_execution": [
+    "Implement the explicit variant and paired runner with enforced budgets.",
+    "Pin candidate code/model/data hashes and independent review notes before collecting comparison outcomes.",
+    "Validate any revised protocol as a new version before execution, never retrospectively adjust bounds."
+  ],
+  "non_goals": [
+    "neural rewiring or full-CNS tuning",
+    "root-position forcing",
+    "force-bound/acceptance relaxation",
+    "new external data or paid services",
+    "autonomous walking, biological equivalence or consciousness claims"
+  ],
+  "handoff": "One implementation owner claims issue #4, branch/base SHA and files; an independent verifier reviews outputs. This plan is neither a reservation nor an automatic scheduler."
+}
