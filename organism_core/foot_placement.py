@@ -160,6 +160,66 @@ def validate_sample(sample, contact_map, friction):
         raise ValueError('Ineligible contact sample makes a balance claim')
 
 
+def root_contact_map(qpos, contacts):
+    """Reconstruct free-root columns from saved world contact positions.
+
+    Translation is world-frame; angular free-joint velocities use the root frame.
+    This is a saved-coordinate Newton-Euler check, not a second collision engine.
+    """
+    q = np.asarray(qpos, dtype=float)
+    if (q.ndim != 1 or len(q) < 7 or not np.isfinite(q).all()
+            or not np.isclose(np.linalg.norm(q[3:7]), 1., atol=1e-10, rtol=0.)):
+        raise ValueError('Finite coordinates and a unit root quaternion required')
+    w, x, y, z = q[3:7]
+    rotation = np.array([[1-2*(y*y+z*z), 2*(x*y-z*w), 2*(x*z+y*w)],
+                         [2*(x*y+z*w), 1-2*(x*x+z*z), 2*(y*z-x*w)],
+                         [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x*x+y*y)]])
+    blocks = []
+    for contact in contacts:
+        point = np.asarray(contact['position_native'], dtype=float)
+        if point.shape != (3,) or not np.isfinite(point).all():
+            raise ValueError('Finite world contact position required')
+        x, y, z = point-q[:3]
+        moment = np.array([[0., -z, y], [z, 0., -x], [-y, x, 0.]])
+        blocks.append(np.vstack([np.eye(3), rotation.T@moment]))
+    return np.column_stack(blocks) if blocks else np.zeros((6, 0))
+
+
+def validate_root_result(report, contact_map, target, friction):
+    """Validate the retained force witness, not just a new LP's success flag."""
+    C, b, mu = (np.asarray(v, dtype=float) for v in (contact_map, target, friction))
+    if (mu.ndim != 1 or not len(mu) or C.shape != (6, 3*len(mu)) or b.shape != (6,)
+            or not all(np.isfinite(v).all() for v in (C, b, mu)) or np.any(mu < 0)):
+        raise ValueError('Invalid saved root balance inputs')
+    status = report.get('status')
+    if (type(report.get('feasible')) is not bool
+            or report['feasible'] != (status == 'feasible')
+            or type(report.get('solver_status')) is not int
+            or status not in ('feasible', 'infeasible_under_declared_constraints', 'inconclusive')):
+        raise ValueError('Root balance status/flag mismatch')
+    expected_status = 0 if status == 'feasible' else 2 if status == 'infeasible_under_declared_constraints' else None
+    if ((expected_status is not None and report['solver_status'] != expected_status)
+            or (status == 'inconclusive' and report['solver_status'] not in (1, 3, 4))):
+        raise ValueError('Root solver status mismatch')
+    if status != 'feasible':
+        if 'forces_native' in report:
+            raise ValueError('Nonfeasible root result includes a force witness')
+        return
+    force = np.asarray(report['forces_native'], dtype=float)
+    if force.shape != (len(mu), 3) or not np.isfinite(force).all():
+        raise ValueError('Invalid root force witness')
+    residual = float(np.max(np.abs(C@force.ravel()-b)/np.maximum(np.abs(b), 1e-6)))
+    violation = float(max(0., np.max(-force[:, 2]),
+                          np.max(np.abs(force[:, 0])+np.abs(force[:, 1])-mu*force[:, 2])))
+    if residual > 1e-6 or violation > 1e-6:
+        raise ValueError('Root force witness fails original constraints')
+    for key, actual in [('maximum_scaled_residual', residual), ('maximum_constraint_violation', violation)]:
+        value = report.get(key)
+        if (type(value) not in (int, float) or not np.isfinite(value) or value < 0
+                or not np.isclose(value, actual, rtol=1e-9, atol=1e-10)):
+            raise ValueError('Root force residual metadata mismatch')
+
+
 def run_study(workspace):
     import importlib.metadata as metadata
     import mujoco as mj
@@ -301,13 +361,22 @@ def verify(workspace):
     """Replay saved LP inputs. No MuJoCo import, no trust in summary counts."""
     from .root_ab import file_hash, write_json
     from .static_support import solve_support
+    from .root_ab_evidence import check_force, check_support, read_json, require
     workspace = Path(workspace); out = workspace/'foot-placement'
     verdict = {'status': 'failed', 'evidence_valid': False, 'scientific_outcome': 'invalid_experiment',
                'walking_claimed': False, 'standing_claimed': False, 'biological_validation': False}
     try:
-        result = json.loads((out/'result.json').read_text())
+        result = read_json(out/'result.json')
+        require(all(result.get(k) is False for k in ('walking_claimed', 'standing_claimed',
+                'CNS_executed', 'biological_validation'))
+                and type(result.get('dynamic_trials_executed')) is int
+                and result['dynamic_trials_executed'] == 0,
+                'unsupported capability claim')
+        frozen = read_json(workspace/'protocol.json')
+        require(frozen.get('kind') == PROTOCOL['id'] and frozen.get('parameters') == PROTOCOL
+                and frozen.get('protocol_sha256') == protocol_hash(), 'pre-execution protocol mismatch')
         if (result['status'] != 'completed' or result['protocol'] != PROTOCOL
-                or result['protocol_sha256'] != protocol_hash() or not result['source_files_unchanged']):
+                or result['protocol_sha256'] != protocol_hash() or result['source_files_unchanged'] is not True):
             raise ValueError('Complete unchanged-source protocol result required')
         for path, expected in [(out/'model-receipt.json', result['model_receipt_sha256']),
                                (out/'observations.npz', result['observations']['sha256']),
@@ -315,10 +384,18 @@ def verify(workspace):
                                (workspace/'source-study/observations.npz', result['source_observations_sha256'])]:
             if file_hash(path) != expected:
                 raise ValueError('Evidence hash mismatch: '+path.name)
-        source = json.loads((workspace/'source-study/result.json').read_text())
+        source = read_json(workspace/'source-study/result.json')
+        require(source['observations']['sha256'] == result['source_observations_sha256']
+                and result['versions'] == source['versions'] and result['units'] == source['units'],
+                'source observations, environment or units mismatch')
         if source['status'] != 'completed':
             raise ValueError('Source experiment incomplete')
-        receipt = json.loads((out/'model-receipt.json').read_text())
+        receipt = read_json(out/'model-receipt.json')
+        invariant = receipt['compiled_invariants']
+        require(invariant.get('passed') is True and invariant == result['compiled_invariants_after']
+                and invariant.get('changed_arrays') == ['dof_damping', 'jnt_stiffness']
+                and receipt.get('operation') == 'root stiffness/damping removed; no further model change',
+                'derived model invariants failed')
         identity = receipt.pop('model_identity')
         if (identity != result['model_identity'] or identity != hashlib.sha256(json.dumps(receipt, sort_keys=True).encode()).hexdigest()
                 or receipt['parent_body_sha256'] != source['body_sha256']):
@@ -346,7 +423,11 @@ def verify(workspace):
                 if row['index'] == 0:
                     np.testing.assert_array_equal(q, z['neutral_qpos'])
                 else:
-                    changed = z['active_qpos'].astype(int)
+                    changed = z['active_qpos']
+                    require(changed.ndim == 1 and changed.dtype.kind in 'iu' and len(changed) > 0
+                            and len(np.unique(changed)) == len(changed)
+                            and np.all((changed >= 7) & (changed < len(q)))
+                            and z['joint_ranges'].shape == (len(changed), 2), 'invalid active joint coordinates')
                     fixed = np.ones(len(q), dtype=bool); fixed[changed] = False
                     np.testing.assert_array_equal(q[fixed], z['neutral_qpos'][fixed])
                     if (not row['fit']['root_unchanged_during_ik'] or not row['fit']['within_original_joint_limits']
@@ -362,6 +443,8 @@ def verify(workspace):
                     targets[:, 2] = z['neutral_foot_origins'][:, 2].min()+expected_height
                     np.testing.assert_array_equal(z[prefix+'targets'], targets)
                 if row['status'] == 'not_bracketed':
+                    require(not row.get('samples') and 'support' not in row
+                            and 'selected_sample_index' not in row, 'unbracketed candidate claims support')
                     inconclusive = True; continue
                 samples = row['samples']
                 if ([s['index'] for s in samples] != list(range(5))
@@ -373,8 +456,11 @@ def verify(workspace):
                     validate_sample(sample, z[sp+'contact_map'], z[sp+'friction'])
                     expected_q = q.copy(); expected_q[2] = row['first_contact_height_native']-sample['depth_native']
                     np.testing.assert_array_equal(z[sp+'qpos'], expected_q)
+                    np.testing.assert_allclose(z[sp+'contact_map'], root_contact_map(expected_q, sample['contacts']),
+                                               rtol=1e-12, atol=1e-12)
                     if not sample['nonfoot_contacts'] and sample['foot_legs']:
                         max_feet = max(max_feet, len(sample['foot_legs']))
+                        validate_root_result(sample['root_balance'], z[sp+'contact_map'], z[sp+'target'], z[sp+'friction'])
                         recalculated = root_balance(z[sp+'contact_map'], z[sp+'target'], z[sp+'friction'])
                         if (recalculated['feasible'] != sample['root_balance']['feasible']
                                 or recalculated['status'] != sample['root_balance']['status']):
@@ -386,6 +472,10 @@ def verify(workspace):
                 expected_index = None if selected is None else selected['index']
                 if row.get('selected_sample_index') != expected_index:
                     raise ValueError('Selected depth differs from frozen policy')
+                if not selected or not selected['root_balance']['feasible']:
+                    require('support' not in row and 'force_accounting' not in row
+                            and row['status'] == ('no_foot_only_pose' if selected is None else 'root_balance_unresolved'),
+                            'ineligible candidate claims muscle support')
                 if selected and selected['root_balance']['feasible']:
                     root_count += 1
                     sp = prefix+f'depth_{selected["index"]:02d}_'
@@ -396,11 +486,22 @@ def verify(workspace):
                     limits = z['maximum_tensions']*np.exp(-((z[prefix+'tendon_lengths']/z['neutral_lengths']-1)/.5)**2)
                     np.testing.assert_allclose(z[prefix+'support_limits'], limits, rtol=1e-12, atol=1e-12)
                     np.testing.assert_allclose(z[prefix+'support_target'], z[prefix+'force_support_target'], rtol=1e-12, atol=1e-12)
-                    if not row['force_accounting']['passed']:
-                        raise ValueError('Force accounting failed')
+                    check_force(row['force_accounting'], z, prefix+'force_', 'unanchored_root', prefix)
+                    check_support(row['support'], z, prefix)
+                    require(row['status'] == row['support']['status']
+                            and row['support']['foot_contacts'] == selected['contacts']
+                            and row['support']['nonfoot_contacts'] == selected['nonfoot_contacts']
+                            and row['support']['contact_flags_match'] is True
+                            and row['support']['feet'] == {leg: leg in selected['foot_legs'] for leg in LEGS}
+                            and row['support'].get('walking_claimed') is False
+                            and row['support'].get('biological_validation') is False,
+                            'full support metadata mismatch')
                     report = solve_support(*(z[prefix+k] for k in ('support_tendon_map', 'support_contact_map',
                                            'support_target', 'support_limits', 'support_friction')))
-                    if report['feasible'] != row['support']['feasible']:
+                    expected_status = 'feasible_at_tested_pose' if report['feasible'] else report['status']
+                    if (report['feasible'] != row['support']['feasible']
+                            or expected_status != row['support']['status']
+                            or report['solver_status'] != row['support']['solver_status']):
                         raise ValueError('Full support does not reproduce')
                     if report['status'] in ('invalid_solver_solution', 'residual_check_failed'):
                         raise ValueError('Invalid full support result')
