@@ -38,9 +38,10 @@ Reproduce the focused benchmark from the repository root:
 ```python
 import runpy, statistics, timeit
 m = runpy.run_path('tests/unit/test_motor_dispatch.py')
-a, b = m['fixture'](), m['fixture']()
+fixture, reference = m['fixture'], m['reference']
+a, b = fixture(), fixture()
 fired = list(range(30, 100)) * 2
-old = timeit.repeat(lambda: m['reference'](a, fired), number=1000, repeat=7)
+old = timeit.repeat(lambda: reference(a, fired), number=1000, repeat=7)
 new = timeit.repeat(lambda: b.decode(fired), number=1000, repeat=7)
 print(statistics.median(old), statistics.median(new))
 ```
