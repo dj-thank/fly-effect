@@ -287,7 +287,7 @@ def compare_arrays(left, right):
     return checked
 
 
-def compare(workspace):
+def _compare(workspace):
     workspace = Path(workspace); results = []; observations = []
     for condition in CONDITIONS:
         directory = workspace/condition; result = json.loads((directory/'result.json').read_text())
@@ -305,6 +305,8 @@ def compare(workspace):
         if a[field] != b[field]:
             raise ValueError('Different paired source/environment: '+field)
     checked = compare_arrays(*observations)
+    from .root_ab_evidence import validate_evidence
+    evidence_validation = validate_evidence(workspace, CONDITIONS, results, observations)
     if a['model_identity'] == b['model_identity']:
         raise ValueError('Candidate must have a distinct model identity')
     invalid = {'invalid_solver_solution', 'residual_check_failed'}
@@ -321,6 +323,7 @@ def compare(workspace):
         'valid_feasible_pose' if b['scan']['feasible_pose_count'] or b['static_support']['feasible'] else 'valid_zero_feasible')
     report = {'schema': 1, 'kind': 'FE-02-root-compliance-ab-v1', 'status': 'completed',
               'comparison_valid': True, 'scientific_outcome': outcome, 'matched_input_arrays': checked,
+              'evidence_validation': evidence_validation,
               'model_identities': {c: r['model_identity'] for c, r in zip(CONDITIONS, results)},
               'condition_result_sha256': {c: file_hash(workspace/c/'result.json') for c in CONDITIONS},
               'feasible_pose_counts': {c: r['scan']['feasible_pose_count'] for c, r in zip(CONDITIONS, results)},
@@ -332,6 +335,21 @@ def compare(workspace):
                   'Preregister a front/middle/rear foot-placement or force-direction test; do not tune this grid.')}
     write_json(workspace/'comparison.json', report)
     return report
+
+
+def compare(workspace):
+    """A failed recheck must replace, not leave behind, an earlier success receipt."""
+    try:
+        return _compare(workspace)
+    except Exception as exc:
+        write_json(Path(workspace)/'comparison.json', {
+            'schema': 1, 'kind': 'FE-02-root-compliance-ab-v1', 'status': 'failed',
+            'comparison_valid': False, 'scientific_outcome': (
+                'inconclusive' if isinstance(exc, (TimeoutError, MemoryError)) else 'invalid_comparison'),
+            'error_type': type(exc).__name__, 'error': str(exc),
+            'biological_validation': False, 'walking_claimed': False,
+            'standing_claimed': False, 'CNS_executed': False})
+        raise
 
 
 if __name__ == '__main__':
