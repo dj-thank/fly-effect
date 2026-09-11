@@ -18,3 +18,7 @@ FLY_EFFECT_DATA_DIR/graphに次の処理済みファイルを置きます。
 
 参考: [FlyEM](https://www.janelia.org/project-team/flyem)、[FlyGym](https://github.com/NeLy-EPFL/flygym)、[CPG研究](https://github.com/smpuglie/Pugliese_cpg_2025)。各提供元は独立しており、リンクは再配布許可を意味しません。
 
+
+## 接続率と運動出力の監査
+
+登録数、非運動ニューロンの接続率、非ゼロ重み、運動系への経路、筋肉側への割当を区別する[読み取り専用監査](CONNECTIVITY_AUDIT.md)を利用できます。配線の追加・削除や受入条件の緩和は行いません。

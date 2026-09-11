@@ -53,9 +53,32 @@ def main():
     d.add_argument('--wall-limit',type=float,default=120.)
     d.add_argument('--leg',choices=['lf','lm','lh','rf','rm','rh'],default='lf')
     d.add_argument('--joint-profile',choices=['generic','muscle_compliance','muscle_transfer'],default='muscle_compliance')
+    d=sub.add_parser('audit-connectivity',help='Read-only locked graph census; no brain/body simulation')
+    d.add_argument('--graph',type=Path,default=DATA/'graph')
+    d.add_argument('--out',type=Path,required=True,help='New directory for result or failure receipt')
+    d.add_argument('--chunk-rows',type=int,default=250000)
+    d.add_argument('--wall-limit',type=float,default=120.)
+    d.add_argument('--min-count',type=int,default=1)
+    d.add_argument('--reachability',action='store_true',help='Explicitly enable bounded reverse graph traversal')
+    d.add_argument('--max-passes',type=int,default=64)
     args=p.parse_args()
     if args.command=='doctor':result=doctor(args.check_data)
     elif args.command=='demo':result=demo(args.out)
+    elif args.command=='audit-connectivity':
+        from organism_core.connectivity_audit import audit_graph
+        try:
+            args.out.mkdir(parents=True,exist_ok=False)
+        except OSError as error:
+            p.error(str(error))
+        try:
+            result=audit_graph(args.graph,chunk_rows=args.chunk_rows,wall_limit=args.wall_limit,
+                               min_count=args.min_count,reachability=args.reachability,max_passes=args.max_passes)
+        except (OSError,ValueError,TypeError) as error:
+            result={'schema':1,'status':'incomplete' if isinstance(error,TimeoutError) else 'unavailable_or_invalid',
+                    'error':str(error),'measured_census':None,'biological_validation':False,'walking_claimed':False}
+            (args.out/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+            p.error(str(error))
+        (args.out/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False)+'\n',encoding='utf-8')
     elif args.command=='mechanics-demo':
         from organism_core.calibration import run_mechanics_demo
         result=run_mechanics_demo(args.out)
