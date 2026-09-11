@@ -1,0 +1,54 @@
+name: VFB live data integration
+on:
+  pull_request:
+    paths:
+      - 'organism_core/vfb_data.py'
+      - 'organism_core/vfb_enrichment.py'
+      - 'tests/unit/test_vfb_data.py'
+      - 'docs/VFB_DATA.md'
+      - '.github/workflows/vfb-data.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vfb-data-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  live-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Catalogue acquisition (public read-only API)
+        id: catalogue
+        timeout-minutes: 3
+        run: >-
+          python -m organism_core.vfb_data export --scope catalogue
+          --out work/vfb-catalogue --page-size 250 --max-pages 100
+          --max-rows 25000 --max-bytes 67108864 --wall-seconds 120
+      - name: Class-level muscle and sense-organ evidence
+        id: body
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        run: >-
+          python -m organism_core.vfb_data export --scope body
+          --out work/vfb-body --page-size 250 --max-pages 40
+          --max-rows 10000 --max-bytes 33554432 --wall-seconds 120
+      - name: Independently re-read every page and retain aggregate evidence only
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          status=0
+          python -m organism_core.vfb_data verify work/vfb-catalogue --summary work/vfb-evidence/catalogue-summary.json || status=1
+          python -m organism_core.vfb_data verify work/vfb-body --summary work/vfb-evidence/body-summary.json || status=1
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: vfb-live-evidence
+          path: work/vfb-evidence/*-summary.json
+          if-no-files-found: error
+          retention-days: 14
