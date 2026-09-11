@@ -139,6 +139,12 @@ class Engine:
         observation=self.observation()
         hashes={k:hashlib.sha256(v.tobytes()).hexdigest() for k,v in observation.items() if isinstance(v,np.ndarray)}
         counts=np.bincount(observation['spike_i'],minlength=len(self.brain.ids))
+        from .sensorimotor_coverage import summarize
+        coverage=summarize(self.brain.ids,self.brain.motor,self.motor_map.rows,
+                           self.motor_map.assignments,self.sensory_ids,self.motor_map.state(),
+                           joint_names=self.body.active_joint_names,
+                           motor_spikes=int(counts[self.brain.motor].sum()))
+        coverage.update(sensory_mode=self.settings['sensory_mode'],body_input_enabled=self.settings['input_enabled'])
         return {'identity':self.identity,'ticks':self.tick,'input_count':self.input_count,
                 'spikes':len(observation['spike_i']),'motor_spikes':int(counts[self.brain.motor].sum()),
                 'observation_hashes':hashes,'rng':{'proprioceptive':self.rng.bit_generator.state,'load':self.load_rng.bit_generator.state},
@@ -146,7 +152,7 @@ class Engine:
                 'neuron_count':len(self.brain.ids),'edge_count':len(self.brain.edges),
                 'free_body':True,'body_actuators':self.body.m.nu,
                 'external_muscle_units':int(self.body.muscles.activation.size),
-                'motor_coupling_implemented':True,'motor_coverage':{'total':len(self.motor_map.rows),'required':sum(r['required_for_walking'] for r in self.motor_map.rows),
+                'motor_coupling_implemented':True,'sensorimotor_coverage':coverage,'motor_coverage':{'total':len(self.motor_map.rows),'required':sum(r['required_for_walking'] for r in self.motor_map.rows),
                     'mapped':len(self.motor_map.assignments),'unresolved_required':sum(r['required_for_walking'] and r['joint'] is None for r in self.motor_map.rows)},
                 'tendon_coverage':({'motor_ids':len(self.body.muscles.migrated),'uninnervated_tendons':self.body.muscles.tendons.uninnervated,'motor_events':self.body.muscles.tendons.events} if self.settings['muscle_model']=='tendon_candidate' else None),
                 'motor_accounting':self.motor_map.state(),'walking_passed':False,
