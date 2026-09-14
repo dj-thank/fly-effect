@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "kind": "organism_candidate",
+  "status": "planned",
+  "question": "Starting from each candidate's lowest-t within-authority margin witnesses, does a bounded iterate of 'evaluate the gate chain -> margin LP at the new geometry -> move passive joints by delta*/k' reach passive-subsystem or full-support equilibrium?",
+  "hypothesis": "Replaying the margin LP on the first directed shifts' saved witnesses showed the required shift contracting at candidates 1-2 (t 0.0017 -> 0.0001). If the map is contractive near a pose, bounded iteration may reach a real equilibrium; divergence or stagnation is itself the measured answer.",
+  "seed": 0,
+  "units": "Native MuJoCo model units, exactly as the existing source study; not animal measurements",
+  "budget": {
+    "wall_seconds": 900,
+    "memory_mib": 8192
+  },
+  "controls": [
+    "the unchanged gate chain, depth grid, contact bracketing and solver settings are identical to the passive-posture and posture-shift experiments",
+    "iterate 0 is the saved witness pose itself; each later pose is fully re-derived from recorded margins by the verifier",
+    "only passive DOFs move; root, active joints, masses, tendon paths, friction, force limits and neural data are unchanged",
+    "a lineage ending with an undecided margin LP is recorded as margin_unresolved and forces the inconclusive outcome, never a physical negative"
+  ],
+  "success_criterion": "One iterate whose saved witness replays passive-subsystem or full-support feasibility under the original solver; still a diagnostic placement, never standing or walking.",
+  "falsification": "No lineage reaching the gate within six iterations rejects only this bounded contraction attempt seeded at the two best witnesses per candidate. Beyond-authority, lost root balance, joint-limit exit and iteration-cap endings are distinct recorded statuses.",
+  "evidence": [],
+  "biological_validation": false,
+  "parameters": {
+    "id": "FE-02-iterative-shift-v1",
+    "seed": 0,
+    "iteration": "evaluate gate chain -> margin LP on the minimum-t root-feasible sample -> passive joints move by delta*/k",
+    "seeds_per_candidate": 2,
+    "seeds": "lowest-t within-authority margin witnesses per candidate",
+    "max_iterations": 6,
+    "driver": "minimum-margin root-feasible sample; ties break by shallower depth",
+    "stop": [
+      "passive_subsystem_feasible",
+      "full_support",
+      "no_root_feasible_sample",
+      "beyond_authority",
+      "iteration_cap"
+    ],
+    "depths_native": [
+      0.001,
+      0.005,
+      0.01,
+      0.02,
+      0.04
+    ],
+    "bracket_half_range_native": 2.0,
+    "bracket_iterations": 25,
+    "root_solver_time_limit_s": 2.0,
+    "max_solver_calls_per_candidate": 640,
+    "max_saved_driver_sets_per_candidate": 24,
+    "candidate_wall_s": 120.0,
+    "worker_wall_s": 900.0,
+    "memory_mib": 8192,
+    "moved_dofs": "exactly-zero tendon-map rows except the six free-root DOFs",
+    "gates": [
+      "foot_only_contact",
+      "root_balance",
+      "passive_subsystem",
+      "full_support"
+    ],
+    "outcomes": [
+      "iterated_shift_reached_full_support",
+      "iterated_shift_reached_passive_subsystem",
+      "no_convergence_in_bounded_iteration",
+      "inconclusive",
+      "invalid_experiment"
+    ],
+    "dynamic_trials": 0,
+    "biological_validation": false,
+    "scope": "Bounded iterate of margin-directed physical shifts; each move is real geometry so contact map and bias are re-derived"
+  }
+}
