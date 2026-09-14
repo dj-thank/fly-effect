@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "kind": "organism_candidate",
+  "status": "planned",
+  "question": "At each retained contact geometry, could ALL passive rows' spring shifts together, each inside its achievable interval k_d*(range_d - q_d), satisfy the root-plus-passive subsystem? The per-row screen found no single row sufficient; this measures combined authority as one margin t.",
+  "hypothesis": "If some saved witness yields t <= 1, the fixed-geometry conflict lies inside combined passive authority and a posture move along that direction is worth a physical trial; if every measured witness yields t > 1, the deficit is quantified in units of the achievable spring-shift box.",
+  "seed": 0,
+  "units": "Native MuJoCo model units; the margin t is dimensionless (fraction of the achievable interval box)",
+  "budget": {
+    "wall_seconds": 240,
+    "memory_mib": 8192
+  },
+  "controls": [
+    "no physics is re-derived: only the saved support witnesses from the foot-placement and passive-posture experiments are replayed",
+    "the unchanged per-witness authority interval is the full closed joint range; tendon limits, friction, scaling and solver are byte-identical to the support LP",
+    "a witness whose margin LP is undecided is recorded as unresolved, never as a physical infeasibility"
+  ],
+  "success_criterion": "Every saved witness replays a decided margin LP; the recorded per-witness t and required shift vectors reproduce under re-solve; the aggregate outcome follows the declared rules.",
+  "falsification": "t <= 1 on any witness rejects 'combined passive authority cannot cover this geometry'. t > 1 everywhere is a local statement about these saved geometries only: a different pose changes the contact map and bias, so this screen alone cannot rule out posture generation.",
+  "evidence": [],
+  "biological_validation": false,
+  "parameters": {
+    "id": "FE-02-passive-margin-v1",
+    "margin_variable": "uniform scale t of every achievable passive spring shift interval k_d*(range_d - q_d); t<=1 means within combined authority at this fixed geometry",
+    "authority_interval": "full closed joint interval, no inset",
+    "rows": "six free-root equations plus every exactly-zero tendon-map row",
+    "solver": "scipy linprog highs with the unchanged scaling and tolerances",
+    "time_limit_s": 10.0,
+    "max_solver_calls": 512,
+    "wall_seconds": 240.0,
+    "replay_tolerance": 1e-06,
+    "outcomes": [
+      "within_combined_authority",
+      "beyond_combined_authority",
+      "inconclusive",
+      "invalid_experiment"
+    ],
+    "inputs": "saved foot-placement and passive-posture witnesses only; no physics",
+    "scope": "fixed-geometry combined-authority screen; moving joints also moves contact geometry and bias, so margins are local to each saved pose",
+    "dynamic_trials": 0,
+    "biological_validation": false
+  }
+}

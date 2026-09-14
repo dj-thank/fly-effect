@@ -110,6 +110,51 @@ complete negative here. The Linux CI job may decide that LP differently; the
 receipts keep the distinction either way. Nothing in this run claims dynamic
 holding, standing, walking, or biological equivalence.
 
+## Combined-authority margin (FE-02-passive-margin-v1)
+
+The per-row screen above asks whether any single passive row's achievable
+spring shift could resolve the subsystem alone; none could. The margin
+diagnostic (`organism_core/passive_margin.py`) asks the sharper question on
+every retained support witness — the nine placement poses plus the up-to-16
+posture witnesses per candidate: if **all** passive rows shift their spring
+torques **simultaneously**, each inside its achievable interval
+`k_d*(range_d - q_d)`, does the root+passive subsystem admit a solution at
+this fixed geometry?
+
+The LP keeps tensions, contact forces, friction and scaling unchanged and adds
+one scalar `t`: the passive row `d` equality `(C r)_d = b_d` becomes
+`(C r)_d ∈ b_d + t*I_d`. The optimal `t` is the fraction of the achievable
+shift box the balance would need; `t ≤ 1` means combined authority suffices
+at this geometry, `t > 1` quantifies the deficit, and solver-infeasible means
+the needed residual direction is unreachable by passive springs at any shift.
+
+### Local execution, 2026-09-15 JST
+
+All 153 saved witnesses replayed; every margin LP was decided. Outcome:
+`within_combined_authority`.
+
+| Candidate | Witnesses within authority | Minimum t |
+| --- | --- | --- |
+| 1 | 17/17 | 0.0017 |
+| 2 | 17/17 | 0.0037 |
+| 3 | 17/17 | 0.073 |
+| 4 | 17/17 | 0.059 |
+| 5 | 17/17 | 0.201 |
+| 6 | 17/17 | 0.392 |
+| 7 | 15/17 | 0.660 |
+| 8 | 8/17 | 0.701 |
+| 9 | 8/17 | 0.762 |
+
+The conflict is therefore not a passive-authority deficit: coordinated shifts
+equal to a small fraction of the achievable intervals — 0.17 % at the best
+witness — satisfy the fixed-geometry equations. This does **not** prove a
+physical posture exists: moving a joint also changes the contact map `C` and
+bias `b`, so the margin only aims the next bounded experiment — a physical
+posture move along the recorded `required_shift_native` directions — and a
+`t ≤ 1` witness says nothing about dynamics, standing, walking or biology.
+An infeasible margin LP (needed direction unreachable) would have been the
+strong local negative; none occurred.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
@@ -126,6 +171,8 @@ In a fresh workspace first run the existing bounded placement pipeline, then:
 ```sh
 python -m organism_core.passive_posture --workspace work/foot-placement
 python -m organism_core.passive_posture --workspace work/foot-placement --verify
+python -m organism_core.passive_margin --workspace work/foot-placement
+python -m organism_core.passive_margin --workspace work/foot-placement --verify
 ```
 
 The dedicated `passive-posture` workflow runs the whole chain and uploads

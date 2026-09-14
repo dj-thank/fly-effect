@@ -9,6 +9,7 @@ on:
       - 'audit_source_tendons.py'
       - 'pyproject.toml'
       - 'examples/fe02-passive-posture.json'
+      - 'examples/fe02-passive-margin.json'
       - '.github/workflows/passive-posture.yml'
   workflow_dispatch:
 permissions:
@@ -48,6 +49,12 @@ jobs:
       - name: Replay saved LP evidence without physics
         timeout-minutes: 8
         run: python -m organism_core.passive_posture --workspace work/foot-placement --verify
+      - name: Measure the combined passive-authority margin on saved witnesses
+        timeout-minutes: 8
+        run: python -m organism_core.passive_margin --workspace work/foot-placement
+      - name: Replay every margin LP from saved arrays
+        timeout-minutes: 8
+        run: python -m organism_core.passive_margin --workspace work/foot-placement --verify
       - name: Retain raw evidence and failures, never meshes or XML assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,6 +67,8 @@ jobs:
             work/foot-placement/*.log
             work/foot-placement/passive-posture/*.json
             work/foot-placement/passive-posture/*.npz
+            work/foot-placement/passive-margin/*.json
+            work/foot-placement/passive-margin/*.npz
             work/foot-placement/foot-placement/*.json
             work/foot-placement/passive-conflict/*.json
             work/foot-placement/source-study/*.json
