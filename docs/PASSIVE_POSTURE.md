@@ -190,6 +190,42 @@ screen cannot see — the spring-shift direction is entangled with contact
 geometry, so balance requires a pose that satisfies both at once, which a
 single linearized move does not produce.
 
+## Bounded iterative shifts (FE-02-iterative-shift-v1)
+
+Replaying the margin LP on the shifted poses' saved witnesses showed the
+required shift *contracting* at some candidates (candidate 1: t 0.0017 →
+0.0001 after one move). `organism_core/iterative_shift.py` iterates the
+loop a bounded number of times: at each iterate the unchanged gate chain
+runs, the minimum-margin root-feasible sample supplies the next passive
+displacement `delta*/k`, and the lineage stops on passive/full feasibility,
+loss of root feasibility, margin beyond authority (`t > 1`), a joint-limit
+violation, or the iteration cap (6 shifts per seed). Two seeds per
+candidate — the lowest-`t` within-authority witnesses — give 18 lineages.
+
+### Local execution, 2026-09-15 JST
+
+All 18 lineages executed to a terminal status (568 solver calls); recorded
+outcome `no_convergence_in_bounded_iteration`. The verifier replayed every
+iterate — re-deriving each lineage's q sequence from the saved driver
+`delta*` witnesses and re-solving every support/subsystem/margin LP —
+`evidence_valid: true`, 98 saved witnesses checked. Because four recorded
+gate solves (two passive-subsystem and two full-support LPs at deep,
+non-driving samples) came back solver-unresolved, the fail-closed verified
+outcome is `inconclusive` — the unresolved solves are not counted as
+infeasible.
+
+| Regime | Candidates | Margin trajectory | Terminal status |
+| --- | --- | --- | --- |
+| Contraction | 1–2 | t shrinks geometrically (cand 1: 1.7e-3 → 7.2e-12) | `iteration_cap` |
+| Divergence / contact loss | 3–9 | t grows or root feasibility disappears | `no_root_feasible_sample` |
+
+The contraction regime is the scientifically interesting negative: at
+candidates 1–2 the required shift approaches zero asymptotically yet exact
+passive feasibility is never reached within the cap — each linearized move
+lands infinitesimally short because it re-perturbs the contact geometry it
+was computed under. No iterate reached the passive-subsystem or
+full-support gate; no dynamic trial ran.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
@@ -210,6 +246,8 @@ python -m organism_core.passive_margin --workspace work/foot-placement
 python -m organism_core.passive_margin --workspace work/foot-placement --verify
 python -m organism_core.posture_shift --workspace work/foot-placement
 python -m organism_core.posture_shift --workspace work/foot-placement --verify
+python -m organism_core.iterative_shift --workspace work/foot-placement
+python -m organism_core.iterative_shift --workspace work/foot-placement --verify
 ```
 
 The dedicated `passive-posture` workflow runs the whole chain and uploads
