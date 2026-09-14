@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "kind": "organism_candidate",
+  "status": "planned",
+  "question": "At each margin witness judged within combined authority, does the directed physical posture q'_d = q_d + delta*_d/k_d - where the contact map and bias genuinely change - now satisfy the root-plus-passive subsystem or even full tendon support?",
+  "hypothesis": "The margin LP showed the conflict is a coordination problem needing only small simultaneous shifts (minimum t = 0.0017). If the linearization holds at the shifted pose, the physical gate chain may now reach the passive-subsystem gate or beyond; if geometry changes break it, that quantifies how nonlocal the fix must be.",
+  "seed": 0,
+  "units": "Native MuJoCo model units, exactly as the existing source study; not animal measurements",
+  "budget": {
+    "wall_seconds": 600,
+    "memory_mib": 8192
+  },
+  "controls": [
+    "the unchanged gate chain, depth grid, contact bracketing and solver settings are identical to the passive-posture search",
+    "only margin witnesses with feasible_within_authority are tried, at scale 1.0, ordered by t",
+    "root, active joints, masses, tendon paths, friction, force limits and neural data are unchanged; only the declared passive DOFs move",
+    "a positive gate always forces a saved support witness so no claim can lack replayable evidence"
+  ],
+  "success_criterion": "One declared shifted posture whose saved witness replays passive-subsystem or full-support feasibility under the original solver; still a diagnostic placement, never standing or walking.",
+  "falsification": "No shifted trial reaching passive equilibrium rejects only this scale-1.0 directed move at the saved margin witnesses. A different pose changes contact geometry and bias, so this cannot rule out other postures; unresolved solver states are recorded separately and never count as physical infeasibility.",
+  "evidence": [],
+  "biological_validation": false,
+  "parameters": {
+    "id": "FE-02-posture-shift-v1",
+    "seed": 0,
+    "shift": "directed: passive DOF d moves to q_d + delta*_d/k_d from each margin witness judged within combined authority (t<=1), scale 1.0",
+    "trials": "every margin witness with feasible_within_authority, ordered by t",
+    "depths_native": [
+      0.001,
+      0.005,
+      0.01,
+      0.02,
+      0.04
+    ],
+    "bracket_half_range_native": 2.0,
+    "bracket_iterations": 25,
+    "root_solver_time_limit_s": 2.0,
+    "max_solver_calls_per_candidate": 512,
+    "max_saved_support_witnesses_per_candidate": 16,
+    "candidate_wall_s": 90.0,
+    "worker_wall_s": 600.0,
+    "memory_mib": 8192,
+    "moved_dofs": "exactly-zero tendon-map rows except the six free-root DOFs",
+    "gates": [
+      "foot_only_contact",
+      "root_balance",
+      "passive_subsystem",
+      "full_support"
+    ],
+    "outcomes": [
+      "shift_reached_full_support",
+      "shift_reached_passive_subsystem",
+      "no_shift_reached_equilibrium",
+      "inconclusive",
+      "invalid_experiment"
+    ],
+    "dynamic_trials": 0,
+    "biological_validation": false,
+    "scope": "Directed physical posture trial; the margin LP is only the aim - contact geometry and bias change with the real move"
+  }
+}

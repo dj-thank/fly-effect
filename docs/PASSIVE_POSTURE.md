@@ -155,6 +155,41 @@ posture move along the recorded `required_shift_native` directions — and a
 An infeasible margin LP (needed direction unreachable) would have been the
 strong local negative; none occurred.
 
+## Directed posture shifts (FE-02-posture-shift-v1)
+
+The margin diagnostic is algebraic — it holds the contact map and bias fixed.
+The follow-up module `organism_core/posture_shift.py` performs the physical
+version: for every margin witness judged within combined authority (`t ≤ 1`),
+each passive joint is actually moved to `q'_d = q_d + delta*_d/k_d` and the
+unchanged gate chain is re-evaluated at the new geometry, where moving the
+joints really does change which geoms touch and what the bias is.
+
+### Local execution, 2026-09-15 JST
+
+All 133 declared directed trials executed; outcome
+`no_shift_reached_equilibrium`, verified `evidence_valid: true` with 133
+trial records and 22 saved support witnesses replayed.
+
+| Candidate | Directed trials | Best gate | Trials reaching root balance |
+| --- | --- | --- | --- |
+| 1–2 | 17 | root balance | 3 |
+| 3 | 17 | root balance | 1 |
+| 4–5 | 17 | root balance | 2 |
+| 6 | 17 | foot-only contact | 0 |
+| 7 | 15 | foot-only contact | 0 |
+| 8–9 | 8 | foot-only contact | 0 |
+
+No shifted posture reached the passive-subsystem gate. The directed shifts
+that resolve the fixed-geometry equations largely *degrade* the physical
+posture: candidates 6–9 frequently lost even foot-only contact (gate 0),
+because the tarsus-chain rotations that produce the needed spring-torque
+change also move the foot tips and perturb the contact configuration the
+margin screen was holding fixed. The algebraic "within authority" verdict
+and the physical outcome differ precisely in the `C`/`b` dependence the
+screen cannot see — the spring-shift direction is entangled with contact
+geometry, so balance requires a pose that satisfies both at once, which a
+single linearized move does not produce.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
@@ -173,6 +208,8 @@ python -m organism_core.passive_posture --workspace work/foot-placement
 python -m organism_core.passive_posture --workspace work/foot-placement --verify
 python -m organism_core.passive_margin --workspace work/foot-placement
 python -m organism_core.passive_margin --workspace work/foot-placement --verify
+python -m organism_core.posture_shift --workspace work/foot-placement
+python -m organism_core.posture_shift --workspace work/foot-placement --verify
 ```
 
 The dedicated `passive-posture` workflow runs the whole chain and uploads
