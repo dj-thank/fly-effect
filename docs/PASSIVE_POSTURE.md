@@ -236,7 +236,7 @@ unchanged, and only the tension bounds are relaxed by a single scalar
 `s >= 0` (`f_j <= s*fmax_j`). The optimum `s*` is the muscle-force
 multiple the pose and contact set would need for static support;
 infeasibility at any `s` means contact geometry alone cannot cover the
-rows tendons cannot reach (the six free-root DOFs and the 30 passive
+rows tendons cannot reach (root translation rows 0-2 and the 30 passive
 DOFs have exactly zero tendon-map entries).
 
 ### Local execution, 2026-09-15 JST
@@ -253,6 +253,44 @@ cone's ability to cover the tension-free rows exactly — a structural
 property of pose and contact configuration, addressable only by posture
 or contact changes (the passive-joint iteration approaches but never
 lands) or by additional contact points, never by stronger muscles.
+
+## Residual-descent posture generation (FE-02-residual-descent-v1)
+
+With muscle force eliminated as the bottleneck, the only remaining lever is
+posture/contact generation — and the actuated (tendon-spanned) joints had
+never been searched: the posture search and the margin iteration moved only
+the 30 passive DOFs. `organism_core/residual_descent.py` runs two declared
+phases. Phase 1 is a generator: cyclic coordinate descent over all 66
+non-root DOFs on the passive-subsystem minimum scaled balance error, with
+the seed's contact map, tendon map and friction held fixed and only the
+bias target `qfrc_bias - qfrc_passive` recomputed per probe. Phase 2 is the
+certifier: the terminal poses re-derive contacts and run the unchanged
+gate chain (contact -> root -> passive subsystem -> full support, audits
+and margin LP included).
+
+### Local execution, 2026-09-15 JST
+
+Four contracting seeds (candidates 1-2, margin t <= 1e-3) descended within
+the declared budgets; recorded outcome
+`descent_floored_without_feasibility`. **Every accepted move was on an
+actuated DOF — 49/49 for candidate 1, 3-5 for candidate 2 — the previously
+unsearched actuated space carried all productive directions.** Candidate 1
+descended 1.4e-2 -> 2.1e-4 and was still improving when the 3000-eval cap
+stopped it (not converged); candidate 2 floored at ~5-6e-6 — under its
+saved contact map no coordinate move of any DOF reduces the residual
+further, so that contact configuration cannot reach exact zero. Physical
+certification reached gate 1-2 only (root balance at best): the
+fixed-map optimum does not transfer, as expected — contact points move
+with the pose. Verified `evidence_valid: true` with every trajectory and
+certification LP replayed; the verified view is `inconclusive` because two
+seed-initial LPs are numerically undecided (fail-closed, same solver
+boundary seen in prior runs).
+
+Interpretation: even with all 66 non-root DOFs free, fixed contact geometry
+cannot reach exact zero — the binding constraint is the contact
+configuration itself. Next justified direction: a generator that changes
+which tarsus points touch (new contacts appearing), e.g. contact-aware
+posture search.
 
 ## Interpretation limits
 

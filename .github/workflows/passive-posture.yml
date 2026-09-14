@@ -13,6 +13,7 @@ on:
       - 'examples/fe02-posture-shift.json'
       - 'examples/fe02-iterative-shift.json'
       - 'examples/fe02-tension-margin.json'
+      - 'examples/fe02-residual-descent.json'
       - '.github/workflows/passive-posture.yml'
   workflow_dispatch:
 permissions:
@@ -80,6 +81,14 @@ jobs:
       - name: Replay every tension-margin LP from saved arrays
         timeout-minutes: 8
         run: python -m organism_core.tension_margin --workspace work/foot-placement --verify
+      - name: Descend the fixed-geometry residual over every non-root DOF
+        timeout-minutes: 15
+        env:
+          FLY_EFFECT_HOME: ${{ github.workspace }}/work/foot-placement
+        run: python -m organism_core.residual_descent --workspace work/foot-placement
+      - name: Replay the descent trajectory and certification LPs
+        timeout-minutes: 8
+        run: python -m organism_core.residual_descent --workspace work/foot-placement --verify
       - name: Retain raw evidence and failures, never meshes or XML assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -100,6 +109,8 @@ jobs:
             work/foot-placement/iterative-shift/*.npz
             work/foot-placement/tension-margin/*.json
             work/foot-placement/tension-margin/*.npz
+            work/foot-placement/residual-descent/*.json
+            work/foot-placement/residual-descent/*.npz
             work/foot-placement/foot-placement/*.json
             work/foot-placement/passive-conflict/*.json
             work/foot-placement/source-study/*.json
