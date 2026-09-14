@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "kind": "organism_candidate",
+  "status": "planned",
+  "question": "Can passive-joint posture adjustment within the original joint ranges, together with contact load sharing, satisfy the root-plus-passive equilibrium that is infeasible at the nine retained placements?",
+  "hypothesis": "Moving only the exactly-zero tendon-map DOFs (the passive tarsus chain) inside their original intervals may admit a contact-load sharing that balances the root plus passive rows; the unchanged saved poses are the fixed control.",
+  "seed": 0,
+  "units": "Native MuJoCo model units, exactly as the existing source study; not animal measurements",
+  "budget": {
+    "wall_seconds": 1200,
+    "memory_mib": 8192
+  },
+  "controls": [
+    "unchanged saved candidate pose re-derived as the first trial of every candidate",
+    "retained PR #19 placements, support matrices and passive-conflict receipts, byte-identical inputs",
+    "fixed-geometry spring-authority screen labelled non-physical"
+  ],
+  "success_criterion": "One declared trial whose saved witness replays root balance, passive-row balance and the original full 90-tendon static support; still a diagnostic placement, never standing or walking.",
+  "falsification": "No declared posture reaching passive equilibrium in this grid rejects only this bounded single-DOF-plus-seeded search. Budget exhaustion, unbracketed trials and unresolved solver states are recorded separately and are never physical infeasibility.",
+  "evidence": [],
+  "biological_validation": false,
+  "parameters": {
+    "id": "FE-02-passive-posture-v2",
+    "seed": 0,
+    "dof_grid_points": 5,
+    "seeded_box_samples": 8,
+    "composed_trials": 1,
+    "depths_native": [
+      0.001,
+      0.005,
+      0.01,
+      0.02,
+      0.04
+    ],
+    "joint_limit_inset_rad": 0.0001,
+    "bracket_half_range_native": 2.0,
+    "bracket_iterations": 25,
+    "root_solver_time_limit_s": 2.0,
+    "spring_shift_points": 5,
+    "max_solver_calls_per_candidate": 2400,
+    "screen_solver_calls_per_candidate": 160,
+    "max_saved_support_witnesses_per_candidate": 16,
+    "candidate_wall_s": 120.0,
+    "worker_wall_s": 1200.0,
+    "memory_mib": 8192,
+    "search_dofs": "exactly-zero tendon-map rows except the six free-root DOFs",
+    "control": "unchanged saved candidate pose re-derived as the first trial",
+    "gates": [
+      "foot_only_contact",
+      "root_balance",
+      "passive_subsystem",
+      "full_support"
+    ],
+    "dynamic_trials": 0,
+    "biological_validation": false,
+    "amended_from": "FE-02-passive-posture-v1 pre-registration sized the call budget (640) below the declared trial list; this version only corrects that bound before any result was claimed"
+  }
+}
