@@ -226,6 +226,34 @@ lands infinitesimally short because it re-perturbs the contact geometry it
 was computed under. No iterate reached the passive-subsystem or
 full-support gate; no dynamic trial ran.
 
+## Tension-authority margin (FE-02-tension-margin-v1)
+
+The iterated contraction left an open question: is the residual deficit
+muscular (declared tendon tension limits too small) or structural?
+`organism_core/tension_margin.py` answers it on every saved support
+witness — all equality rows stay strict, the friction diamond is
+unchanged, and only the tension bounds are relaxed by a single scalar
+`s >= 0` (`f_j <= s*fmax_j`). The optimum `s*` is the muscle-force
+multiple the pose and contact set would need for static support;
+infeasibility at any `s` means contact geometry alone cannot cover the
+rows tendons cannot reach (the six free-root DOFs and the 30 passive
+DOFs have exactly zero tendon-map entries).
+
+### Local execution, 2026-09-15 JST
+
+All 273 saved witnesses (9 placements + 144 posture-search + 22
+directed-shift + 98 iterative-shift) decided identically:
+`unreachable_at_any_scale` — **no finite muscle-force scale can balance
+any saved pose**. Verified `evidence_valid: true` with every LP
+re-solved from retained arrays; outcome `unbounded_tension_deficit`.
+
+This closes the deficit decomposition: the transferred muscle tension
+limits are NOT the bottleneck. The binding constraint is the contact
+cone's ability to cover the tension-free rows exactly — a structural
+property of pose and contact configuration, addressable only by posture
+or contact changes (the passive-joint iteration approaches but never
+lands) or by additional contact points, never by stronger muscles.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
@@ -248,6 +276,8 @@ python -m organism_core.posture_shift --workspace work/foot-placement
 python -m organism_core.posture_shift --workspace work/foot-placement --verify
 python -m organism_core.iterative_shift --workspace work/foot-placement
 python -m organism_core.iterative_shift --workspace work/foot-placement --verify
+python -m organism_core.tension_margin --workspace work/foot-placement
+python -m organism_core.tension_margin --workspace work/foot-placement --verify
 ```
 
 The dedicated `passive-posture` workflow runs the whole chain and uploads

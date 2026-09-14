@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "kind": "organism_candidate",
+  "status": "planned",
+  "question": "At each saved support witness (placement, posture search, directed shift, and iterated shift poses), with every equality row strict and friction unchanged, what uniform scale s on the declared tendon tension limits admits static support? The iterative run floored the full-support residual near 0.2 with tensions saturated at fmax; this measures the deficit directly.",
+  "hypothesis": "If some witness yields s <= 1, declared tension authority suffices at that fixed geometry; a finite s > 1 quantifies the force deficit of the transferred tension limits; 'unreachable at any scale' means contact geometry alone cannot cover the root+passive rows regardless of muscle force.",
+  "seed": 0,
+  "units": "Native MuJoCo model units; the margin s is dimensionless (multiple of the declared tension limits)",
+  "budget": {
+    "wall_seconds": 240,
+    "memory_mib": 8192
+  },
+  "controls": [
+    "no physics is re-derived: only saved support witnesses from the four declared evidence sets are replayed",
+    "the friction diamond, equality rows, scaling and solver are byte-identical to the support LP; only the tension bound becomes s*fmax",
+    "a witness whose margin LP is undecided is recorded as unresolved, never as physical infeasibility"
+  ],
+  "success_criterion": "Every saved witness replays a decided margin LP; per-witness s and tension vectors reproduce under re-solve; witness sets cover every saved support array and carry evidence_saved linkage; the aggregate outcome follows the declared rules.",
+  "falsification": "s <= 1 on any witness rejects 'declared tension authority is insufficient at this geometry'. A finite s > 1 is a local statement about saved geometries; s = infinity identifies structural contact/rank limits independent of muscle force.",
+  "evidence": [],
+  "biological_validation": false,
+  "parameters": {
+    "id": "FE-02-tension-margin-v1",
+    "question": "With all equality rows strict and friction unchanged, what uniform scale s on declared tension limits admits static support at each saved witness?",
+    "variables": "tensions f, contact forces r, scalar tension-authority scale s; constraints f_j <= s*fmax_j, f >= 0, friction diamond, T f + C r = b on every row",
+    "sources": [
+      "foot-placement",
+      "passive-posture",
+      "posture-shift",
+      "iterative-shift"
+    ],
+    "outcomes": [
+      "within_tension_authority",
+      "bounded_tension_deficit",
+      "unbounded_tension_deficit",
+      "inconclusive",
+      "invalid_experiment"
+    ],
+    "time_limit_s": 10.0,
+    "max_solver_calls": 512,
+    "wall_seconds": 240.0,
+    "replay_tolerance": 1e-06,
+    "dynamic_trials": 0,
+    "biological_validation": false,
+    "scope": "Fixed-geometry algebraic screen on saved witnesses; a finite s* measures the force deficit of the transferred tension limits, not a physical posture or a biological claim"
+  }
+}
