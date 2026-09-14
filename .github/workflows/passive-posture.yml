@@ -58,6 +58,8 @@ jobs:
         run: python -m organism_core.passive_margin --workspace work/foot-placement --verify
       - name: Evaluate the gate chain at margin-directed shifted postures
         timeout-minutes: 12
+        env:
+          FLY_EFFECT_HOME: ${{ github.workspace }}/work/foot-placement
         run: python -m organism_core.posture_shift --workspace work/foot-placement
       - name: Replay every shifted-trial gate from saved arrays
         timeout-minutes: 8
