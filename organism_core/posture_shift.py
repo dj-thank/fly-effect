@@ -288,7 +288,7 @@ def verify(workspace):
         margin_by_index = {c['index']: c for c in margin['candidates']}
         trials_checked = witnesses_checked = 0
         passive_feasible = full_feasible = 0
-        inconclusive = False
+        inconclusive = truncated = False
         for entry in result['candidates']:
             index = entry['index']; prefix = f'pose_{index:02d}_'
             candidate = placed['candidates'][index]
@@ -322,7 +322,7 @@ def verify(workspace):
                             and trial['status'] in ('budget_exhausted',
                                                     'call_budget_exhausted'),
                             'unexecuted trials must end the record explicitly')
-                    inconclusive = True
+                    truncated = inconclusive = True
                     continue
                 require(meta['kind'] == 'directed_shift', 'unknown trial kind')
                 w = declared[t_i]
@@ -478,14 +478,15 @@ def verify(workspace):
                         [t['best_gate'] for t in entry['trials'] if 'best_gate' in t],
                         default=0), 'candidate summary mismatch')
         outcome = result['scientific_outcome']
-        expected_outcome = ('inconclusive' if inconclusive else
+        expected_outcome = ('inconclusive' if truncated else
                             'shift_reached_full_support' if full_feasible else
                             'shift_reached_passive_subsystem' if passive_feasible else
                             'no_shift_reached_equilibrium')
         require(outcome == expected_outcome,
                 'recorded outcome does not match replayed gates')
         verdict.update(status='completed', evidence_valid=True,
-                       scientific_outcome=outcome, trials_checked=trials_checked,
+                       scientific_outcome='inconclusive' if inconclusive else outcome,
+                       recorded_outcome=outcome, trials_checked=trials_checked,
                        witnesses_checked=witnesses_checked,
                        passive_feasible_samples=passive_feasible,
                        full_feasible_samples=full_feasible,
