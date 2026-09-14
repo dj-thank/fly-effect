@@ -292,6 +292,13 @@ configuration itself. Next justified direction: a generator that changes
 which tarsus points touch (new contacts appearing), e.g. contact-aware
 posture search.
 
+Linux CI reproduced candidate 2 bit-identically (floors ~5e-6) and decided
+the two seed-initial LPs that were undecided on Windows, so the verified
+outcome there is `descent_floored_without_feasibility` directly. Candidate
+1's fixed-map floor resolved on Linux to ~4.5e-9 — at solver resolution
+but still nonzero, with 41 unresolved probe evals marking how boundary-
+close these subsystem LPs sit.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
