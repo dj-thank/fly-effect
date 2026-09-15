@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "kind": "organism_candidate",
+ "status": "planned",
+ "question": "Starting from the contracting iterative-shift seeds, can a generated pose reach exact static feasibility when every probe re-derives contacts? Unlike the fixed-map descent, the contact set may appear or disappear between probes, so the descent explores the true piecewise residual landscape.",
+ "hypothesis": "If live-contact descent floors nonzero at every seed, the contact family reachable by coordinate moves from these seeds cannot support the model; if it reaches ~0 and certifies feasible, the first passive-equilibrium pose is found (a static witness, not standing).",
+ "seed": 0,
+ "units": "Native MuJoCo model units; residual R is dimensionless (scaled balance error)",
+ "budget": {
+  "wall_seconds": 900,
+  "memory_mib": 8192
+ },
+ "controls": [
+  "every probe re-derives first-contact height, the five-depth grid, contacts, tendon limits and bias at the trial pose \u2014 no fixed-geometry approximation",
+  "every accepted descent step saves its driver sample's full LP inputs (tendon map, contact map, target, limits, friction) so the verifier replays without physics",
+  "phase 2 re-runs the unchanged gate chain with force audit and margin LP on terminal poses",
+  "an undecided LP is recorded as unresolved, never as physical infeasibility",
+  "no actuator, controller, CNS or dynamic trial is executed"
+ ],
+ "success_criterion": "Every declared seed executes within probe/wall budgets; terminal poses are physically certified; all saved LPs replay under the verifier; the aggregate outcome follows the declared rules.",
+ "falsification": "A certified feasible passive subsystem rejects 'no pose in this contact family balances'; nonzero floors at all seeds strengthen the contact-configuration constraint to live geometry, not just a saved map.",
+ "evidence": [],
+ "biological_validation": false,
+ "parameters": {
+  "id": "FE-02-contact-descent-v1",
+  "seed_margin_threshold": 0.001,
+  "max_seeds_total": 8,
+  "descent_dofs": "every non-root DOF row (actuated and passive); the six free-root DOF rows are held fixed",
+  "objective": "passive-subsystem minimum scaled balance error with LIVE contact re-derivation per probe: first-contact height, depth grid, contacts, tendon limits and bias target are all recomputed at each trial pose; the residual is the minimum over root-feasible depth samples",
+  "descent_rule": "deterministic cyclic coordinate descent in row order; per-DOF step h_rel*(joint range), h_rel starts at 0.25 and halves after any sweep without improvement",
+  "h_rel_initial": 0.25,
+  "h_rel_floor": 0.0001,
+  "joint_limit_inset_rad": 0.0001,
+  "max_evals_per_seed": 1500,
+  "certified_poses_per_seed": 2,
+  "depths_native": [
+   0.001,
+   0.005,
+   0.01,
+   0.02,
+   0.04
+  ],
+  "bracket_half_range_native": 2.0,
+  "bracket_iterations": 25,
+  "root_solver_time_limit_s": 2.0,
+  "max_solver_calls_per_seed": 40000,
+  "seed_wall_s": 240.0,
+  "worker_wall_s": 900.0,
+  "memory_mib": 8192,
+  "replay_tolerance": 1e-06,
+  "outcomes": [
+   "found_full_support_pose",
+   "found_subsystem_feasible_pose",
+   "descent_floored_without_feasibility",
+   "inconclusive",
+   "invalid_experiment"
+  ],
+  "verification": "replay of saved-input LPs in the same SciPy/HiGHS family; no independent physics or biological check",
+  "scope": "Static witness generation; contacts are re-derived per probe but this is a bounded declared search, not global posture optimization; no dynamic or biological claim"
+ }
+}
