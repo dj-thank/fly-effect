@@ -389,6 +389,32 @@ and large, not a solver-contract artifact: the subsystem rows can be
 balanced to 3e-7, but closing all 72 rows within declared tension bounds
 is a different, unsolved problem at every pose found.
 
+## Bounded global posture sampling (FE-02-global-sample-v1)
+
+All descents explored the seed basin found by the structured pipeline —
+was the nonzero floor a local-basin artifact? `organism_core/global_sample.py`
+draws 512 declared-random poses (hinges uniform inside their limits,
+root tilt uniform-axis/uniform-angle within 0.6 rad of neutral),
+evaluates the full-support residual under live contacts, descends the
+best eight eligible samples, and certifies through the unchanged chain.
+
+### Local execution, 2026-09-15 JST
+
+512/512 evaluated, 443 formed valid foot contacts — and **every eligible
+sample scored R = 1.0**, the saturated ceiling of the scaled residual
+(random poses leave passive rows demanding far more than contacts plus
+tensions can ever supply). The eight descended samples accepted zero
+moves; certifications stopped at gate 1. Verified `evidence_valid:
+true`, outcome `no_global_improvement`.
+
+Interpretation: the pipeline-discovered basin (~0.148) is orders of
+magnitude better than anything reachable by declared-random sampling —
+good contact configurations are rare and structured, not generic.
+Within the declared budget the deficit is global to the posture space,
+not a seed-basin artifact. FE-02's bounded static program is exhausted:
+the transferred model cannot statically support itself, exactly or
+approximately, at any pose found by the declared searches.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
