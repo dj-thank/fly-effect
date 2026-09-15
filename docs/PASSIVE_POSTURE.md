@@ -299,6 +299,41 @@ outcome there is `descent_floored_without_feasibility` directly. Candidate
 but still nonzero, with 41 unresolved probe evals marking how boundary-
 close these subsystem LPs sit.
 
+## Live-contact residual descent (FE-02-contact-descent-v1)
+
+The fixed-map descent floored nonzero and its optima did not transfer to
+real contact geometry, so `organism_core/contact_descent.py` removes the
+approximation entirely: every probe re-derives first-contact height, the
+five-depth grid, contacts, tendon limits and the bias target, and the
+objective is the minimum subsystem scaled residual over root-feasible
+depths. The contact set itself can appear or disappear between probes —
+the descent walks the true piecewise residual landscape.
+
+### Local execution, 2026-09-15 JST
+
+Four seeds, 6000 probes, ~51k solver calls: outcome
+`descent_floored_without_feasibility`, verified `evidence_valid: true`
+with every saved LP replayed and decided. Candidate 1 seeds sit at a live
+floor of **3.3e-7 with zero accepted moves at any step size** (0.25 down
+to ~1e-4 range-fraction); candidate 2 floors at ~4-8e-6 after two
+actuated-only moves. Certification reached root balance (gate 2) only.
+
+Notably the candidate-1 floor (3.3e-7) is **below the declared 1e-6
+feasibility residual tolerance** — the nearest-balance LP certifies a
+tension+contact assignment satisfying every bound and the friction
+diamond with equality error 3.3e-7, yet the strict LP never returns a
+feasible vertex. Under the declared solver contract the pose is
+infeasible; under residual tolerance it balances to within numerical
+resolution. Both statements are recorded as-is; the contract is not
+redefined.
+
+Interpretation: even with contacts free to change across probes, the
+bounded coordinate-descent family from the best seeds cannot certify
+exact static support. Together with the earlier negative layers this
+closes the bounded static-support search space explored so far; the only
+unexplored lever is poses outside these seed basins (a different search
+class, e.g. contact-set enumeration or IK-driven generation).
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
