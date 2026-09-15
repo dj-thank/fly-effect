@@ -360,6 +360,35 @@ model has now been descended under live contacts within the declared
 bounds; the residual floor is a feature of the contact family itself,
 not of which subset of DOFs is allowed to move.
 
+## Full-system residual descent (FE-02-full-descent-v1)
+
+Every prior descent optimized the passive-subsystem residual — the
+tension-free rows that block exact feasibility. `organism_core/full_descent.py`
+descends the physically meaningful objective instead: the full 72-row
+support LP's minimum scaled balance error, i.e. how close any
+constraint-satisfying force assignment gets to balancing the whole body,
+under live contacts over 66 joints plus three bounded root-tilt axes.
+
+### Local execution, 2026-09-15 JST
+
+Four seeds, ~16k probes, ~160k solver calls: outcome
+`descent_floored_without_feasibility`, verified `evidence_valid: true`
+with all replays decided. The full residual descends far more than the
+subsystem residual ever did — candidate 1 fell from 0.233 to **0.148**
+(281 accepted moves, 34 of them root-tilt moves; tilting reduces the
+full residual even though it never helped the subsystem), candidate 2
+reached ~0.18. All seeds were still slowly improving when the declared
+probe budget ran out (`eval_budget_exhausted`, not a hard floor), so the
+true coordinate-descent floor lies lower — but the best-found residual
+is ~0.15, five orders of magnitude above the 1e-6 support tolerance.
+
+Interpretation: the model cannot reach even tolerance-level static
+support anywhere in the bounded search space — the best force
+assignment leaves a ~15% normalized balance error. The deficit is real
+and large, not a solver-contract artifact: the subsystem rows can be
+balanced to 3e-7, but closing all 72 rows within declared tension bounds
+is a different, unsolved problem at every pose found.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
