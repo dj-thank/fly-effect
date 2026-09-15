@@ -334,6 +334,32 @@ closes the bounded static-support search space explored so far; the only
 unexplored lever is poses outside these seed basins (a different search
 class, e.g. contact-set enumeration or IK-driven generation).
 
+## Root-orientation descent (FE-02-root-descent-v1)
+
+After the live-contact descent floored nonzero, the only unexplored
+posture axis was root orientation — root x,y are dead by translation
+symmetry and root z is re-derived per probe. `organism_core/root_descent.py`
+repeats the live descent with three additional world-frame rotation DOFs
+(small-angle axis-angle premultiplications, total tilt from the seed
+bounded at 0.6 rad) on top of the 66 joint DOFs.
+
+### Local execution, 2026-09-15 JST
+
+Four seeds, ~8000 probes, ~63k solver calls: outcome
+`descent_floored_without_feasibility`, verified `evidence_valid: true`
+with all replays decided. Candidate 1 seeds completed the full step-size
+schedule (`step_floor_reached`) at the same 3.3e-7 floor with **zero
+accepted moves in every direction — joint and rotation alike**.
+Candidate 2 accepted a handful of joint moves (5 and 3) and **zero
+rotation moves**, flooring at ~4-8e-6. No certification passed gate 2.
+
+Interpretation: freeing root tilt never produced an improving probe at
+any declared step size — the local floor is robust to contact-set changes
+reachable by bounded tilting. Every posture DOF axis available to this
+model has now been descended under live contacts within the declared
+bounds; the residual floor is a feature of the contact family itself,
+not of which subset of DOFs is allowed to move.
+
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
