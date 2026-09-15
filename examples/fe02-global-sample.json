@@ -1,0 +1,73 @@
+{
+  "biological_validation": false,
+  "budget": {
+    "memory_mib": 8192,
+    "wall_seconds": 1500
+  },
+  "controls": [
+    "Declared bounded sampling only; no global-optimality claim",
+    "All saved LP inputs replayed without physics by the verifier"
+  ],
+  "evidence": [
+    "work/foot-placement/global-sample/result.json",
+    "work/foot-placement/global-sample/observations.npz"
+  ],
+  "falsification": "All 512 samples evaluated and no descended sample improves on the seed-basin floor.",
+  "hypothesis": "Either an independently sampled basin descends below the seed floor (the floor is local), or no sampled pose improves on it (the deficit is global to this posture space within the declared budget).",
+  "id": "fe02-global-sample",
+  "kind": "organism_candidate",
+  "parameters": {
+    "bracket_half_range_native": 2.0,
+    "bracket_iterations": 25,
+    "certified_poses_per_sample": 2,
+    "depths_native": [
+      0.001,
+      0.005,
+      0.01,
+      0.02,
+      0.04
+    ],
+    "descend_top_k": 8,
+    "descent_dofs": "every non-root DOF row plus three world-frame root-rotation axes, identical to FE-02-full-descent-v1",
+    "descent_evals_per_sample": 500,
+    "h_rel_floor": 0.0001,
+    "h_rel_initial": 0.25,
+    "id": "FE-02-global-sample-v1",
+    "improvement_rule": "a descended sample terminal R strictly below the best recorded full-descent terminal residual (read from the verified full-descent result)",
+    "joint_limit_inset_rad": 0.0001,
+    "max_root_tilt_rad": 0.6,
+    "max_solver_calls": 120000,
+    "memory_mib": 8192,
+    "n_samples": 512,
+    "objective": "FULL-system minimum scaled balance error (all 72 rows within declared tension limits) with LIVE contact re-derivation per probe; identical to FE-02-full-descent-v1",
+    "outcomes": [
+      "found_full_support_pose",
+      "found_subsystem_feasible_pose",
+      "tolerance_support_witness",
+      "global_basin_improvement",
+      "no_global_improvement",
+      "inconclusive",
+      "invalid_experiment"
+    ],
+    "replay_tolerance": 1e-06,
+    "rng_seed": 20260915,
+    "root_solver_time_limit_s": 2.0,
+    "root_tilt_nominal_range_rad": 0.6,
+    "sampling": "per-hinge uniform inside joint limits (inset by joint_limit_inset_rad); root orientation = uniform axis on the sphere with uniform angle in [0, max_root_tilt_rad] composed onto the neutral quat; root x,y fixed (translation symmetry), root z re-derived per probe by first-contact bracketing",
+    "scope": "Static witness generation; a bounded declared sample is not global optimization; no dynamic or biological claim",
+    "seed_wall_s": 350.0,
+    "support_residual_tolerance": 1e-06,
+    "verification": "replay of saved-input LPs in the same SciPy/HiGHS family; no independent physics or biological check",
+    "worker_wall_s": 1500.0
+  },
+  "question": "Is the nonzero full-support residual floor a local seed-basin artifact or global to the posture space? Do declared-random poses (uniform hinges, bounded random tilt) descended under live contacts reach below the established seed-basin floor (~0.148)?",
+  "schema_version": 1,
+  "seed": 20260915,
+  "status": "planned",
+  "success_criterion": "A descended sampled pose reaches terminal full residual strictly below the verified full-descent floor.",
+  "units": {
+    "angle": "rad",
+    "force": "native",
+    "length": "native"
+  }
+}
