@@ -1,0 +1,68 @@
+{
+  "biological_validation": false,
+  "budget": {
+    "memory_mib": 8192,
+    "wall_seconds": 900
+  },
+  "controls": [
+    "Declared bounded search only; no global-optimality claim",
+    "All saved LP inputs replayed without physics by the verifier"
+  ],
+  "evidence": [
+    "work/foot-placement/root-descent/result.json",
+    "work/foot-placement/root-descent/observations.npz"
+  ],
+  "falsification": "All seeds floor nonzero and no certification passes gate 3.",
+  "hypothesis": "Tilting the root can bring new tarsus points into the contact set; either the residual floor drops below the live-contact bound or a feasible pose is certified.",
+  "id": "fe02-root-descent",
+  "kind": "organism_candidate",
+  "parameters": {
+    "bracket_half_range_native": 2.0,
+    "bracket_iterations": 25,
+    "certified_poses_per_seed": 2,
+    "depths_native": [
+      0.001,
+      0.005,
+      0.01,
+      0.02,
+      0.04
+    ],
+    "descent_dofs": "every non-root DOF row (actuated and passive) plus three world-frame root-rotation axes; root x,y are dead by translation symmetry and root z is re-derived per probe",
+    "descent_rule": "deterministic cyclic coordinate descent: joint DOFs in row order then rotation axes x,y,z; rotations applied as world-frame axis-angle premultiplications; probes exceeding max_root_tilt_rad from the seed orientation are rejected without evaluation",
+    "h_rel_floor": 0.0001,
+    "h_rel_initial": 0.25,
+    "id": "FE-02-root-descent-v1",
+    "joint_limit_inset_rad": 0.0001,
+    "max_evals_per_seed": 2000,
+    "max_root_tilt_rad": 0.6,
+    "max_seeds_total": 8,
+    "max_solver_calls_per_seed": 30000,
+    "memory_mib": 8192,
+    "objective": "passive-subsystem minimum scaled balance error with LIVE contact re-derivation per probe, identical to FE-02-contact-descent-v1",
+    "outcomes": [
+      "found_full_support_pose",
+      "found_subsystem_feasible_pose",
+      "descent_floored_without_feasibility",
+      "inconclusive",
+      "invalid_experiment"
+    ],
+    "replay_tolerance": 1e-06,
+    "root_solver_time_limit_s": 2.0,
+    "root_tilt_nominal_range_rad": 0.6,
+    "scope": "Static witness generation; contacts are re-derived per probe but this is a bounded declared search, not global posture optimization; no dynamic or biological claim",
+    "seed_margin_threshold": 0.001,
+    "seed_wall_s": 240.0,
+    "verification": "replay of saved-input LPs in the same SciPy/HiGHS family; no independent physics or biological check",
+    "worker_wall_s": 900.0
+  },
+  "question": "Freeing root orientation (three world-frame rotation axes, bounded tilt) on top of all 66 joint DOFs, does live-contact descent reach exact subsystem feasibility or a floor below the established nonzero bound?",
+  "schema_version": 1,
+  "seed": 0,
+  "status": "planned",
+  "success_criterion": "A certified pose reaches the passive-subsystem or full-support gate under live contacts.",
+  "units": {
+    "angle": "rad",
+    "force": "native",
+    "length": "native"
+  }
+}
