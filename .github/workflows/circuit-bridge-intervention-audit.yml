@@ -1,0 +1,59 @@
+name: Circuit Bridge intervention audit
+on:
+  push:
+    branches: [research/circuit-bridge-intervention-audit]
+    paths:
+      - research/circuit_bridge/intervention_audit.py
+      - tests/circuit_bridge_intervention/**
+      - docs/circuit_bridge/**
+      - research/circuit_bridge/protocols/**
+      - .github/workflows/circuit-bridge-intervention-audit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: circuit-bridge-intervention-audit-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pytest==8.4.2
+      - name: Software tests including geometric endpoint counterexamples
+        run: |
+          mkdir -p work/intervention-audit
+          python -m pytest tests/circuit_bridge tests/circuit_bridge_intervention -q --junitxml=work/intervention-audit/tests.xml
+      - name: Fetch exact historical archive, not a new CNS simulation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api /repos/dj-thank/fly-effect/actions/artifacts/10483482922/zip > work/intervention-audit/historical.zip
+          python - <<'PY'
+          import hashlib, pathlib, zipfile
+          p=pathlib.Path('work/intervention-audit/historical.zip')
+          assert hashlib.sha256(p.read_bytes()).hexdigest() == '206577c07a08589dddfe860cc289d89477fe042c7a431d4f9fce4d3f9644ec0a'
+          with zipfile.ZipFile(p) as z:
+              for name in ('result.json','traces-gain-0.8.npz'):
+                  (p.parent/name).write_bytes(z.read(name))
+          PY
+      - name: Recompute archived evidence and fixed-decoder diagnostics
+        run: |
+          python -m research.circuit_bridge.intervention_audit --result work/intervention-audit/result.json --traces work/intervention-audit/traces-gain-0.8.npz --out work/intervention-audit/audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: circuit-bridge-intervention-audit
+          path: |
+            work/intervention-audit/tests.xml
+            work/intervention-audit/audit.json
+          retention-days: 30

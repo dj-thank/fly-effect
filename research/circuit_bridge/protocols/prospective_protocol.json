@@ -1,0 +1,44 @@
+{
+  "schema": "circuit-bridge-prospective-design/v1",
+  "status": "design_candidate_not_executed_not_preregistered",
+  "date": "2026-09-17",
+  "historical_results_already_seen": true,
+  "question": "When does subcircuit replacement preserve intervention responses at predeclared outputs?",
+  "anatomical_baseline_commit": "787b67537034646edb1f61ffac64da188ecbb17d",
+  "invariants": ["preserve real source IDs and boundary edges", "no main-branch acceptance changes", "no artificial gait controller described as connectome behavior"],
+  "factorial_pilot": {
+    "independently_driven_region_ports": [1, 2, 4, 8, 16, 32, 64],
+    "per_port_amplitude": [0.03, 0.06, 0.1],
+    "energy_designs": ["matched_per_port_amplitude", "fixed_total_l2_energy"],
+    "port_subset_selection": "anatomy-only; freeze exact IDs before outcome generation",
+    "stimulus_covariance_selection": "freeze correlation matrices and realized energy summaries",
+    "input_unit": "dimensionless model drive, not biological current",
+    "rank_candidates": [2, 4, 8, 16, 32, 64],
+    "full_rank_classification": "parity_control_not_compression"
+  },
+  "split_contract": {
+    "training": "model fitting only",
+    "validation": "rank and hyperparameter selection only",
+    "test": "untouched conditions after manifest freeze; no retuning",
+    "hidden_external_challenge": "future independent reviewer; not yet arranged",
+    "biological_split": "animal/specimen before trial; data acquisition and power design pending",
+    "important": "public committed test seeds are not a blinded external challenge"
+  },
+  "comparators": ["intact", "lesion", "native_reconnection", "degree_preserving_shuffle", "rank_matched_random_basis", "POD_Galerkin", "identified_dynamics_with_matched_budget"],
+  "readouts": ["all declared boundary outputs", "predeclared motor channels", "paired perturbation response Delta", "kinematics only after body calibration"],
+  "metrics": {
+    "historical_R": "1 - Frobenius(candidate-reference)/Frobenius(lesion-reference)",
+    "proposed_model_tolerance_R": 0.95,
+    "paired_intervention_response": "Y(stimulus,perturbation)-Y(stimulus,none)",
+    "primary_effect_floor": "must be frozen from training/noise calibration before confirmation",
+    "per_channel_sensitivity_floors": [0.001, 0.01, 0.1],
+    "forbidden": ["phase alignment after seeing outputs", "drop failed channels", "clip negative recovery", "count full rank as compression", "count seeds as animals"]
+  },
+  "model_uncertainty": {
+    "current": "contractive rate model used as numerical control only",
+    "prospective": ["physiologically calibrated spiking model", "reference oscillatory CPG model with complete provenance"],
+    "no_certificate_transfer_without_proof": true
+  },
+  "gates_before_confirmatory_claim": ["complete data and license locks", "pre-outcome protocol and metric freeze", "matched controls", "untouched intervention data", "external reproduction", "biological validation before biological claim"],
+  "unresolved": ["calibrated biophysical parameter sets", "complete MANC replication", "independent animal data", "output-specific replacement bound", "durable DOI archive", "laboratory partner and ethics approval for tissue experiments"]
+}
