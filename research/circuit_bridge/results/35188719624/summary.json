@@ -1,0 +1,23 @@
+{
+  "schema":"circuit-bridge-frozen-challenge-summary/v1",
+  "source_commit":"1c1ec27d951ef341d291d8555d4cb2709e0ae998",
+  "actions_run_id":"35188719624",
+  "artifact_id":10483160949,
+  "artifact_sha256":"e504b3f2ef0b54e9d55e9604427109c04cc56f41e48309fc86d0b77a564b67b8",
+  "baseline_commit":"3ed2f21a28f9bcbac5b1090ffef938129b55aac4",
+  "retrained":false,
+  "region_neurons":64,
+  "latent_rank":4,
+  "metric":"1 - candidate deviation from intact / lesion deviation from intact, using all 815 motor traces",
+  "challenges":[
+    {"name":"fast_alternating_DNge104","pod_recovery":0.9936890933162931,"lesion_relative_intact_error":0.16083898125200313},
+    {"name":"long_silence_and_burst_DNge104","pod_recovery":0.982996477065442,"lesion_relative_intact_error":0.15109464326689903},
+    {"name":"DNa02","pod_recovery":0.05132962356467219,"lesion_relative_intact_error":0.0008896941147679768},
+    {"name":"DNg13","pod_recovery":0.018618084658599265,"lesion_relative_intact_error":0.010694584863291348},
+    {"name":"MDN","pod_recovery":0.004906527955882645,"lesion_relative_intact_error":0.01292778581837821}
+  ],
+  "interpretation":"The fixed replacement generalized to new temporal patterns on the original DNge104 pair but did not preserve lesion-sensitive responses to other descending neuron groups. DNa02 has a particularly small lesion effect (0.089% relative model-output error), so its recovery percentage must not be read as a large functional deficit. No biological behavior was tested.",
+  "biological_validation":false,
+  "body_simulated":false,
+  "living_tissue_connected":false
+}
