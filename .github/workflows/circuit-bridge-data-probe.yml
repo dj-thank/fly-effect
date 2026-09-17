@@ -15,38 +15,37 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install 'pyarrow==21.0.0' 'pandas==2.2.3'
-      - name: Inspect the versioned official annotation tables
+      - run: python -m pip install pyarrow==19.0.1 pandas==2.2.3 numpy==2.2.6
+      - name: Compare official annotation populations with upstream lock
         run: |
           mkdir -p work/probe
           python - <<'PY'
-          import hashlib, json, pathlib, urllib.request
+          import hashlib, io, json, pathlib, urllib.request
           import pandas as pd
+          import numpy as np
           base='https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/'
-          result={'dataset':'male-cns:v1.0','source':'https://male-cns.janelia.org/download/','tables':{}}
-          for filename in ('body-annotations-male-cns-v1.0-minconf-0.5.feather','body-neurotransmitters-male-cns-v1.0.feather'):
-              path=pathlib.Path('work/probe')/filename
-              sha=hashlib.sha256(); size=0
-              with urllib.request.urlopen(base+filename, timeout=90) as response, path.open('wb') as out:
-                  headers=dict(response.headers)
-                  while chunk:=response.read(1024*1024):
-                      size+=len(chunk)
-                      if size>100_000_000: raise ValueError('Annotation resource budget exceeded')
-                      out.write(chunk); sha.update(chunk)
-              df=pd.read_feather(path)
-              entry={'url':base+filename,'sha256':sha.hexdigest(),'bytes':size,'columns':{str(k):str(v) for k,v in df.dtypes.items()},'rows':len(df),'index':str(df.index.name),'sample':json.loads(df.head(3).to_json(orient='records'))}
-              if 'type' in df:
-                  mask=df['type'].fillna('').astype(str).str.contains(r'DNa02|DNg|DNge104|PFL3|EPG|PEN',regex=True)
-                  entry['candidate_samples']=json.loads(df.loc[mask].head(30).to_json(orient='records'))
-                  entry['candidate_type_counts']=df.loc[mask,'type'].value_counts().to_dict()
-              result['tables'][filename]=entry
+          name='body-annotations-male-cns-v1.0-minconf-0.5.feather'
+          with urllib.request.urlopen(base+name,timeout=90) as response:
+              data=response.read(50_000_001)
+              generation=response.headers.get('x-goog-generation')
+          assert len(data)<=50_000_000
+          assert hashlib.sha256(data).hexdigest()=='2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2'
+          df=pd.read_feather(io.BytesIO(data))
+          lock=json.loads(pathlib.Path('organism_core/graph_lock.json').read_text())
+          result={'dataset':'male-cns:v1.0','annotation_sha256':hashlib.sha256(data).hexdigest(),'generation':generation,'source_commit':__import__('os').environ['GITHUB_SHA'],'status_counts':df['status'].fillna('<null>').value_counts().to_dict(),'status_label_counts':df['statusLabel'].astype(str).value_counts().to_dict(),'populations':{}}
+          for label, mask in [('all',np.ones(len(df),dtype=bool)),('status_Traced',df['status'].eq('Traced')),('type_present',df['type'].notna()),('superclass_present',df['superclass'].notna())]:
+              sub=df.loc[mask]; ids=np.sort(sub['bodyId'].to_numpy(dtype=np.int64))
+              buf=io.BytesIO(); np.save(buf,ids,allow_pickle=False)
+              digest=hashlib.sha256(buf.getvalue()).hexdigest()
+              result['populations'][label]={'rows':len(ids),'ids_sha256':digest,'matches_upstream_ids':digest==lock['files']['body_ids.npy'],'superclasses':sub['superclass'].fillna('<null>').value_counts().to_dict(),'DNge104':json.loads(sub.loc[sub['type'].eq('DNge104'),['bodyId','type','status','superclass']].to_json(orient='records'))}
           text=json.dumps(result,indent=2)
-          pathlib.Path('work/probe/schema.json').write_text(text)
+          pathlib.Path('work/probe/population.json').write_text(text)
           print(text)
-          with open(__import__('os').environ['GITHUB_STEP_SUMMARY'],'w') as out: out.write('## Official MaleCNS source schema\n```json\n'+text+'\n```\n')
           PY
+          git archive HEAD -o work/probe/source.zip
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: circuit-bridge-source-probe
-          path: work/probe/schema.json
-          retention-days: 7
+          name: circuit-bridge-population-probe
+          path: work/probe/
+          retention-days: 14
