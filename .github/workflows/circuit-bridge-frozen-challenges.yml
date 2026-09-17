@@ -1,0 +1,76 @@
+name: Circuit Bridge frozen challenges
+on:
+  push:
+    branches: [research/circuit-bridge-fork-seed]
+    paths:
+      - research/circuit_bridge/stress_test.py
+      - research/circuit_bridge/verify_evidence.py
+      - .github/workflows/circuit-bridge-frozen-challenges.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: circuit-bridge-frozen-challenges-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  challenge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pandas==2.2.3 pyarrow==19.0.1 pytest==8.4.2
+      - run: python -m pytest tests/circuit_bridge -q --junitxml=work/challenge-tests.xml
+      - name: Fetch immutable original baseline artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/baseline work/challenges
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10482898125/zip" > work/baseline.zip
+          python - <<'PY'
+          import hashlib, pathlib, zipfile
+          p = pathlib.Path('work/baseline.zip')
+          assert hashlib.sha256(p.read_bytes()).hexdigest() == 'd5d7398e0e5a0a6f26a11c9e347db7a4f55026137b110025acc960d95c0cbecd'
+          with zipfile.ZipFile(p) as z:
+              assert all(not pathlib.PurePosixPath(n).is_absolute() and '..' not in pathlib.PurePosixPath(n).parts for n in z.namelist())
+              z.extractall('work/baseline')
+          assert pathlib.Path('work/baseline/source-commit.txt').read_text().strip() == '3ed2f21a28f9bcbac5b1090ffef938129b55aac4'
+          PY
+      - name: Independently verify baseline numerical traces
+        run: python -m research.circuit_bridge.verify_evidence --evidence work/baseline --out work/challenges/baseline-audit.json
+      - name: Regenerate pinned public graph and challenge frozen replacement
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from research.circuit_bridge.malecns import acquire
+          acquire(Path(os.environ['RUNNER_TEMP'])/'malecns')
+          PY
+          python -m research.circuit_bridge.stress_test --data "$RUNNER_TEMP/malecns" --baseline work/baseline --out work/challenges 2>&1 | tee work/challenges/experiment.log
+      - name: Preserve exact source and execution metadata
+        if: always()
+        run: |
+          mkdir -p work/challenges
+          git archive HEAD -o work/challenges/source.zip
+          python - <<'PY'
+          import json, os, pathlib
+          d=pathlib.Path('work/challenges')
+          (d/'execution.json').write_text(json.dumps({'source_commit':os.environ['GITHUB_SHA'],'actions_run_id':os.environ['GITHUB_RUN_ID'],'baseline_commit':'3ed2f21a28f9bcbac5b1090ffef938129b55aac4','result_present':(d/'challenges.json').exists()},indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: circuit-bridge-frozen-challenges
+          path: |
+            work/challenges/
+            work/challenge-tests.xml
+          retention-days: 30
