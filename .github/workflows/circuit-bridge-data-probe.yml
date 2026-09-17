@@ -1,0 +1,52 @@
+name: Circuit Bridge data probe
+on:
+  workflow_dispatch:
+  push:
+    branches: ['research/circuit-bridge-fork-seed']
+    paths: ['.github/workflows/circuit-bridge-data-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'pyarrow==21.0.0' 'pandas==2.2.3'
+      - name: Inspect the versioned official annotation tables
+        run: |
+          mkdir -p work/probe
+          python - <<'PY'
+          import hashlib, json, pathlib, urllib.request
+          import pandas as pd
+          base='https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/'
+          result={'dataset':'male-cns:v1.0','source':'https://male-cns.janelia.org/download/','tables':{}}
+          for filename in ('body-annotations-male-cns-v1.0-minconf-0.5.feather','body-neurotransmitters-male-cns-v1.0.feather'):
+              path=pathlib.Path('work/probe')/filename
+              sha=hashlib.sha256(); size=0
+              with urllib.request.urlopen(base+filename, timeout=90) as response, path.open('wb') as out:
+                  headers=dict(response.headers)
+                  while chunk:=response.read(1024*1024):
+                      size+=len(chunk)
+                      if size>100_000_000: raise ValueError('Annotation resource budget exceeded')
+                      out.write(chunk); sha.update(chunk)
+              df=pd.read_feather(path)
+              entry={'url':base+filename,'sha256':sha.hexdigest(),'bytes':size,'columns':{str(k):str(v) for k,v in df.dtypes.items()},'rows':len(df),'index':str(df.index.name),'sample':json.loads(df.head(3).to_json(orient='records'))}
+              if 'type' in df:
+                  mask=df['type'].fillna('').astype(str).str.contains(r'DNa02|DNg|DNge104|PFL3|EPG|PEN',regex=True)
+                  entry['candidate_samples']=json.loads(df.loc[mask].head(30).to_json(orient='records'))
+                  entry['candidate_type_counts']=df.loc[mask,'type'].value_counts().to_dict()
+              result['tables'][filename]=entry
+          text=json.dumps(result,indent=2)
+          pathlib.Path('work/probe/schema.json').write_text(text)
+          print(text)
+          with open(__import__('os').environ['GITHUB_STEP_SUMMARY'],'w') as out: out.write('## Official MaleCNS source schema\n```json\n'+text+'\n```\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: circuit-bridge-source-probe
+          path: work/probe/schema.json
+          retention-days: 7
