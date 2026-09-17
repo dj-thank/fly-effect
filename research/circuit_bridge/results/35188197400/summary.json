@@ -1,0 +1,43 @@
+{
+  "schema": "circuit-bridge-result-summary/v1",
+  "status": "measured_model_response_only",
+  "source_commit": "3ed2f21a28f9bcbac5b1090ffef938129b55aac4",
+  "actions_run_id": "35188197400",
+  "artifact_id": 10482898125,
+  "artifact_sha256": "d5d7398e0e5a0a6f26a11c9e347db7a4f55026137b110025acc960d95c0cbecd",
+  "dataset": "HHMI Janelia MaleCNS v1.0, minconf-0.5 annotated neuronal domain",
+  "neurons": 166700,
+  "connection_rows": 25582938,
+  "synaptic_contacts": 124177617,
+  "motor_neurons_observed": 815,
+  "graph_byte_parity": {
+    "body_ids.npy": true,
+    "edges.bin": true,
+    "motor_indices.npy": true,
+    "glutamate_inhibitory_hypothesis_signs.npy": true
+  },
+  "model": "dimensionless contractive signed rate model, gain 0.8, alpha 0.25; not upstream Brian2 LIF",
+  "region_size": 64,
+  "selected_latent_rank": 4,
+  "training_seeds": [0, 1],
+  "validation_seeds": [11],
+  "heldout_seeds": [101, 102, 103],
+  "training_amplitude_upper": 0.7,
+  "heldout_amplitude_upper": 1.1,
+  "recovery_definition": "1 - ||candidate_motor - intact_motor||_F / ||lesion_motor - intact_motor||_F; not a biological recovery rate",
+  "heldout": [
+    {"seed":101,"lesion_relative_intact_error":0.1643761151486099,"pod_relative_intact_error":0.001565870672756082,"pod_recovery":0.9904738552110177,"internal_shuffle_recovery":0.9593933228046375,"random_rank4_recovery":-0.13137804966630862},
+    {"seed":102,"lesion_relative_intact_error":0.16195964264098814,"pod_relative_intact_error":0.0016499185081950698,"pod_recovery":0.989812780015498,"internal_shuffle_recovery":0.9666556421428297,"random_rank4_recovery":-0.06223606869530518},
+    {"seed":103,"lesion_relative_intact_error":0.15887231102651952,"pod_relative_intact_error":0.001351477684130471,"pod_recovery":0.9914933088377819,"internal_shuffle_recovery":0.9778010197001522,"random_rank4_recovery":-0.10117948490484219}
+  ],
+  "maximum_native_motor_difference": 8.673617379884035e-19,
+  "saved_trace_metric_recomputations_passed": 15,
+  "basis_recomputed_from_training_subspace": true,
+  "limitations": [
+    "Only two artificially driven descending neurons; one uncalibrated dynamics hypothesis and one anatomical specimen.",
+    "POD retains the internal 64-neuron operator and all 64 boundary ports. Four latent states do not mean four replacement biological neurons, whole-brain compression or measured speedup.",
+    "High recovery also occurs with internal shuffle, so these experiments do not demonstrate necessity of precise internal wiring.",
+    "Unknown/modulatory fast neurotransmitter signs are explicitly zero while anatomical rows remain preserved.",
+    "No biological validation, living tissue, embodied simulation, walking or upstream LIF execution was demonstrated."
+  ]
+}
