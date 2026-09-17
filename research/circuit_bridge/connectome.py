@@ -11,6 +11,7 @@ import hashlib
 import numpy as np
 from scipy import sparse
 from .core import Boundary, Request, Response, digest
+from .certificate import DefectMonitor, contraction
 
 
 def array_hash(a: np.ndarray) -> str:
@@ -127,15 +128,37 @@ def pod_basis(traces, rank: int) -> np.ndarray:
 
 
 def internal_shuffle(internal, seed: int):
-    """Permute internal posts, preserving each pre/weight pair and post degree.
+    """Directed double-edge swaps with no merged parallel edges.
 
-    Does NOT preserve weighted post strength; report this limitation. No
-    renormalization, port rewiring or use of held-out responses is allowed.
+    Preserve in/out degree and each presynaptic node's weight multiset.
+    Weighted incoming strengths are NOT preserved. Zero-weight entries are
+    removed for this functional-operator control; anatomy stays unchanged.
     """
-    coo = internal.tocoo(copy=True)
-    rows = np.random.default_rng(seed).permutation(coo.row)
-    out = sparse.csr_matrix((coo.data, (rows, coo.col)), shape=internal.shape)
-    out.sum_duplicates(); out.sort_indices()
+    mat = internal.tocsr(copy=True)
+    mat.sum_duplicates(); mat.eliminate_zeros(); mat.sort_indices()
+    coo = mat.tocoo()
+    rows, cols, data = coo.row.copy(), coo.col.copy(), coo.data.copy()
+    count = len(data)
+    if count < 2:
+        return mat
+    occupied = set(zip(rows.tolist(), cols.tolist()))
+    rng = np.random.default_rng(seed)
+    accepted = 0
+    for _ in range(40 * count):
+        i, j = rng.choice(count, 2, replace=False)
+        a, b, c, d = int(cols[i]), int(rows[i]), int(cols[j]), int(rows[j])
+        if a == c or b == d or a == d or c == b:
+            continue
+        if (d, a) in occupied or (b, c) in occupied:
+            continue
+        occupied.remove((b, a)); occupied.remove((d, c))
+        occupied.add((d, a)); occupied.add((b, c))
+        rows[i], rows[j] = d, b
+        accepted += 1
+        if accepted >= 5 * count:
+            break
+    out = sparse.csr_matrix((data, (rows, cols)), shape=internal.shape)
+    out.sort_indices()
     return out
 
 
@@ -165,6 +188,9 @@ def simulate(circuit, region, motor, stimulus_indices, stimulus, mode='intact',
                                  basis if mode in ('pod', 'random_basis') else None)
         boundary = Boundary(endpoint, tuple(str(int(x)) for x in circuit.ids[r]), conf.dt_s,
                             deadline_s=30)
+    monitor = DefectMonitor(contraction(conf.gain, conf.alpha))
+    defects = np.zeros(len(stim))
+    bounds = np.zeros(len(stim))
     state = np.zeros(len(circuit.ids))
     motor_trace = np.empty((len(stim), len(motor)))
     region_trace = np.empty((len(stim), len(r))) if capture_region else None
@@ -177,6 +203,7 @@ def simulate(circuit, region, motor, stimulus_indices, stimulus, mode='intact',
         total = circuit.w @ state
         total[stim_idx] += drive
         nxt = (1 - conf.alpha) * state + conf.alpha * np.tanh(total)
+        original_region = nxt[r].copy()
         if mode == 'lesion':
             nxt[r] = 0
         elif boundary is not None:
@@ -186,18 +213,25 @@ def simulate(circuit, region, motor, stimulus_indices, stimulus, mode='intact',
             boundary.records.clear()
         if not np.isfinite(nxt).all() or np.max(np.abs(nxt)) > 1 + 1e-12:
             raise ValueError('Nonfinite or out-of-contract circuit state')
+        defects[step] = float(np.max(np.abs(nxt[r] - original_region)))
+        bounds[step] = monitor.advance(float(defects[step]))
         state = nxt
         motor_trace[step] = state[motor]
         if region_trace is not None:
             region_trace[step] = state[r]
     return {'motor': motor_trace, 'region': region_trace,
             'final_hash': array_hash(state), 'stimulus_hash': array_hash(stim),
-            'motor_hash': array_hash(motor_trace)}
+            'motor_hash': array_hash(motor_trace),
+            'defect_inf': defects, 'error_bound_inf': bounds,
+            'certificate': {'q': monitor.q, 'peak_bound': monitor.peak,
+                'final_bound': monitor.bound, 'steps': monitor.steps,
+                'uses_intact_reference': False, 'floating_point_rigorous': False,
+                'scope': 'declared rate dynamics; shared external stimulus; identical initial state'}}
 
 
 def comparison(reference, lesion, candidate):
     arrays = [np.asarray(x, dtype=float) for x in (reference, lesion, candidate)]
-    if any(x.shape != arrays[0].shape or not np.isfinite(x).all() for x in arrays):
+    if any(not x.size or x.shape != arrays[0].shape or not np.isfinite(x).all() for x in arrays):
         raise ValueError('Finite, shape-matched traces required')
     ref, les, cand = arrays
     norm = float(np.linalg.norm(ref))
@@ -206,5 +240,6 @@ def comparison(reference, lesion, candidate):
     measurable = damage > max(1e-12, norm * 1e-8)
     return {'reference_norm': norm, 'lesion_error': damage, 'candidate_error': error,
             'relative_reference_error': error / norm if norm > 1e-12 else None,
+            'lesion_relative_reference_error': damage / norm if norm > 1e-12 else None,
             'recovery_fraction': 1 - error / damage if measurable else None,
             'status': 'model_response_only' if measurable else 'unmeasurable_lesion_effect'}

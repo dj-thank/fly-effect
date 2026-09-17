@@ -1,11 +1,9 @@
 name: Circuit Bridge real MaleCNS
 on:
   push:
-    branches: [research/circuit-bridge-fork-seed]
+    branches: [research/circuit-bridge-fork-seed, research/circuit-bridge-certified]
     paths:
-      - research/circuit_bridge/connectome.py
-      - research/circuit_bridge/malecns.py
-      - research/circuit_bridge/certificate.py
+      - research/circuit_bridge/**
       - tests/circuit_bridge/**
       - .github/workflows/circuit-bridge-malecns.yml
   workflow_dispatch:
@@ -28,9 +26,9 @@ jobs:
       - run: python -m pytest tests/circuit_bridge -q
   experiment:
     needs: tests
-    if: github.ref == 'refs/heads/research/circuit-bridge-fork-seed' && github.event_name != 'pull_request'
+    if: contains(fromJSON('["refs/heads/research/circuit-bridge-fork-seed","refs/heads/research/circuit-bridge-certified"]'), github.ref) && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       OPENBLAS_NUM_THREADS: '1'
       OMP_NUM_THREADS: '1'
@@ -45,7 +43,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/malecns" work/real-data
-          python -m research.circuit_bridge.malecns --data "$RUNNER_TEMP/malecns" --out work/real-data/result.json 2>&1 | tee work/real-data/experiment.log
+          python -m research.circuit_bridge.benchmark --data "$RUNNER_TEMP/malecns" --out work/real-data/result.json --gains 0.5 0.8 0.95 2>&1 | tee work/real-data/experiment.log
+          python -c "import json; assert json.load(open('work/real-data/result.json'))['status']=='complete'"
       - name: Record checked-out source and compact audit evidence
         if: always()
         run: |
