@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pytest==8.4.2
+      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pandas==2.2.3 pytest==8.4.2
       - name: Software tests including geometric endpoint counterexamples
         run: |
           mkdir -p work/intervention-audit
