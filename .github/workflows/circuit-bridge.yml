@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pytest==8.4.2
+      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pandas==2.2.3 pytest==8.4.2
       - run: python -m compileall -q research/circuit_bridge
       - run: python -m pytest tests/circuit_bridge -q --junitxml=work/bridge-tests.xml
       - run: python -m research.circuit_bridge --out work/bridge-demo --steps 400 --seeds 0 1 2

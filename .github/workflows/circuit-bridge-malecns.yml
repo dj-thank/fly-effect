@@ -6,8 +6,7 @@ on:
       - research/circuit_bridge/connectome.py
       - research/circuit_bridge/malecns.py
       - research/circuit_bridge/certificate.py
-      - tests/circuit_bridge/test_connectome.py
-      - tests/circuit_bridge/test_certificate.py
+      - tests/circuit_bridge/**
       - .github/workflows/circuit-bridge-malecns.yml
   workflow_dispatch:
 permissions:
@@ -24,7 +23,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pytest==8.4.2
+      - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pandas==2.2.3 pytest==8.4.2
       - run: python -m compileall -q research/circuit_bridge
       - run: python -m pytest tests/circuit_bridge -q
   experiment:
@@ -44,6 +43,7 @@ jobs:
       - run: python -m pip install numpy==2.2.6 scipy==1.15.3 pandas==2.2.3 pyarrow==19.0.1
       - name: Full graph acquisition and held-out interventions
         run: |
+          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/malecns" work/real-data
           python -m research.circuit_bridge.malecns --data "$RUNNER_TEMP/malecns" --out work/real-data/result.json 2>&1 | tee work/real-data/experiment.log
       - name: Record checked-out source and compact audit evidence
