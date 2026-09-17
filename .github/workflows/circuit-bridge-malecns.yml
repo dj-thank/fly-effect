@@ -1,0 +1,80 @@
+name: Circuit Bridge real MaleCNS
+on:
+  push:
+    branches: [research/circuit-bridge-fork-seed]
+    paths:
+      - research/circuit_bridge/connectome.py
+      - research/circuit_bridge/malecns.py
+      - tests/circuit_bridge/test_connectome.py
+      - .github/workflows/circuit-bridge-malecns.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: circuit-bridge-malecns-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install numpy==2.2.6 scipy==1.15.3 pytest==8.4.2
+      - run: python -m pytest tests/circuit_bridge -q
+  experiment:
+    needs: tests
+    if: github.ref == 'refs/heads/research/circuit-bridge-fork-seed' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install numpy==2.2.6 scipy==1.15.3 pandas==2.2.3 pyarrow==19.0.1
+      - name: Full graph acquisition and held-out interventions
+        run: |
+          mkdir -p "$RUNNER_TEMP/malecns"
+          python -m research.circuit_bridge.malecns --data "$RUNNER_TEMP/malecns" --out "$RUNNER_TEMP/result.json" 2>&1 | tee "$RUNNER_TEMP/experiment.log"
+      - name: Record evidence without raw dataset redistribution
+        if: always()
+        env:
+          BRANCH: research/circuit-bridge-fork-seed
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          root = pathlib.Path(os.environ['RUNNER_TEMP'])
+          out = pathlib.Path('research/circuit_bridge/results')
+          out.mkdir(parents=True, exist_ok=True)
+          report = root/'result.json'
+          if report.exists():
+              result = json.loads(report.read_text())
+              result['source_commit'] = os.environ['GITHUB_SHA']
+              result['actions_run_id'] = os.environ['GITHUB_RUN_ID']
+              (out/'malecns-v1.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          else:
+              result = {'status':'failed','source_commit':os.environ['GITHUB_SHA'], 'actions_run_id':os.environ['GITHUB_RUN_ID']}
+              for name in ('schema.json','source-manifest.json'):
+                  p = root/'malecns'/name
+                  if p.exists(): result[name] = json.loads(p.read_text())
+              log = root/'experiment.log'
+              if log.exists(): result['diagnostic'] = log.read_text()[-6000:]
+              (out/'malecns-failure.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          PY
+          git fetch origin "$BRANCH"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/circuit_bridge/results/
+          if ! git diff --cached --quiet; then
+            git commit -m 'research: record real MaleCNS experiment evidence [skip ci]'
+            git push origin "HEAD:$BRANCH"
+          fi
