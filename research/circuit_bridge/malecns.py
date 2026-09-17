@@ -24,8 +24,17 @@ SOURCES = {
     'nt': 'body-neurotransmitters-male-cns-v1.0.feather',
     'weights': 'connectome-weights-male-cns-v1.0-minconf-0.5.feather',
 }
-WEIGHT_SHA = 'e35da783d1c686b2b58b3b87cd6a403ae43bfcfba8bff28e08ef752c1a56afc1'
+SOURCE_HASHES = {
+    'annotations': '2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2',
+    'nt': '95c9289220663abeb3409f3ad9e5a7f8a53f8093f5139d15502cd08da8879621',
+    'weights': 'e35da783d1c686b2b58b3b87cd6a403ae43bfcfba8bff28e08ef752c1a56afc1',
+}
 EDGE_DTYPE = np.dtype([('pre', '<u4'), ('post', '<u4'), ('count', '<u4'), ('source_row', '<u8')])
+
+
+def file_hash(path):
+    with Path(path).open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
 def write_json(path, value):
@@ -53,12 +62,13 @@ def acquire(directory):
                 if size > 1_200_000_000:
                     raise ValueError('Source exceeds public download budget')
                 out.write(chunk); h.update(chunk)
-        if key == 'weights' and h.hexdigest() != WEIGHT_SHA:
-            raise ValueError('Pinned MaleCNS connection source hash changed')
+        if h.hexdigest() != SOURCE_HASHES[key]:
+            raise ValueError(f'Pinned MaleCNS source hash changed: {key}')
         path.with_suffix('.part').replace(path)
         manifest['files'][key] = {'url': url + '?generation=' + generation,
             'generation': generation, 'sha256': h.hexdigest(), 'bytes': size}
         write_json(directory / 'source-manifest.json', manifest)
+        print(f'Verified source {key}: {size:,} bytes', flush=True)
     return manifest
 
 
@@ -93,6 +103,9 @@ def import_graph(directory):
     write_json(d / 'schema.json', diagnostic)
     if ann[aid].duplicated().any() or nt[nid].duplicated().any():
         raise ValueError('Ambiguous source ID annotation')
+    # The raw table also contains glia/orphans/unclassified segments.
+    # This rule, unlike status==Traced, exactly reproduces upstream body_ids.
+    ann = ann.loc[ann['superclass'].notna()].copy()
     ids = np.sort(ann[aid].to_numpy(dtype=np.int64))
     if len(ids) != 166700:
         raise ValueError(f'Annotated population differs from upstream 166700: {len(ids)}; see schema.json')
@@ -100,7 +113,7 @@ def import_graph(directory):
     labels = nt.set_index(nid).reindex(ids)[ntcol].fillna('unknown').astype(str).str.lower()
     signs = labels.map({'acetylcholine': 1, 'gaba': -1, 'glutamate': -1}).fillna(0).to_numpy(dtype=np.int8)
     # Same explicit glutamate-inhibitory hypothesis; NOT receptor-aware physiology.
-    motor = np.flatnonzero(ann['superclass'].astype(str).eq('vnc_motor').to_numpy())
+    motor = np.flatnonzero(ann['superclass'].astype(str).isin(('vnc_motor', 'cb_motor')).to_numpy())
     if len(motor) != 815:
         raise ValueError(f'Expected upstream 815 motor annotations, got {len(motor)}')
     stim = np.flatnonzero(ann['type'].astype(str).eq('DNge104').to_numpy())
@@ -141,11 +154,26 @@ def import_graph(directory):
         'raw_connection_rows': total, 'unannotated_endpoint_rows_excluded': total-retained,
         'motor_neurons': len(motor), 'stimulus_body_ids': ids[stim].tolist(),
         'body_ids_npy_sha256': hashlib.sha256((d/'body_ids.npy').read_bytes()).hexdigest(),
-        'edges_bin_sha256': hashlib.file_digest(path.open('rb'), 'sha256').hexdigest(),
+        'edges_bin_sha256': file_hash(path),
         'sign_hypothesis': 'ACh +1; GABA -1; glutamate -1; all other/unknown 0',
         'sign_counts': {str(k): int((signs == k).sum()) for k in (-1, 0, 1)},
         'nt_labels': {str(k): int(v) for k, v in labels.value_counts().items()},
         'full_annotated_graph_preserved': True, 'raw_source_rows_preserved': True}
+    lock = json.loads((Path(__file__).resolve().parents[2] /
+                       'organism_core/graph_lock.json').read_text())
+    np.save(d / 'motor_indices.npy', motor, allow_pickle=False)
+    actual = {'body_ids.npy': report['body_ids_npy_sha256'],
+              'edges.bin': report['edges_bin_sha256'],
+              'motor_indices.npy': file_hash(d / 'motor_indices.npy')}
+    report['upstream_hash_matches'] = {name: value == lock['files'][name]
+                                       for name, value in actual.items()}
+    report['population_rule'] = 'all source rows with non-null superclass; sorted bodyId'
+    report['motor_rule'] = 'vnc_motor OR cb_motor; sorted index in locked ID array'
+    if not all(report['upstream_hash_matches'].values()):
+        write_json(d / 'graph-audit.json', report)
+        raise ValueError('Regenerated anatomy differs from upstream graph lock')
+    write_json(d / 'graph-audit.json', report)
+    print(f'Locked graph: {len(ids):,} neurons, {len(edges):,} edges', flush=True)
     return ids, edges, signs, motor, stim, report
 
 
@@ -172,6 +200,7 @@ def experiment(ids, edges, signs, motor, stim, gain=0.8):
     if len(region) < 16:
         raise ValueError('Too few two-hop bridge candidates for prespecified experiment')
     del unsigned
+    print(f'Bridge region: {len(region)} nodes', flush=True)
     train_seeds, val_seeds, test_seeds = (0, 1), (11,), (101, 102, 103)
     train = [simulate(circuit, region, motor, stim, stimuli(s))['region'] for s in train_seeds]
     training = np.vstack(train)
@@ -192,6 +221,7 @@ def experiment(ids, edges, signs, motor, stim, gain=0.8):
     random = np.linalg.qr(np.random.default_rng(991).normal(size=(len(region), chosen)))[0]
     trials = []
     for seed in test_seeds:
+        print(f'Held-out stimulus seed {seed}; frozen rank {chosen}', flush=True)
         # Higher amplitudes test extrapolation; no refitting/rank changes on test traces.
         drive = stimuli(seed, amplitude=1.1)
         ref = simulate(circuit, region, motor, stim, drive)
@@ -232,7 +262,11 @@ def main():
     started = time.monotonic()
     source = json.loads((args.data/'source-manifest.json').read_text()) if args.reuse else acquire(args.data)
     # Recheck all source bytes even when explicitly reusing a downloaded dataset.
+    if set(source['files']) != set(SOURCES):
+        raise ValueError('Incomplete source manifest')
     for key, item in source['files'].items():
+        if item['sha256'] != SOURCE_HASHES[key]:
+            raise ValueError('Manifest does not identify the pinned official sources')
         with (args.data/SOURCES[key]).open('rb') as stream:
             if hashlib.file_digest(stream, 'sha256').hexdigest() != item['sha256']:
                 raise ValueError('Source bytes do not match recorded provenance')
@@ -243,6 +277,8 @@ def main():
           'body_simulated': False, 'walking_demonstrated': False, 'upstream_lif_executed': False},
         'experiment': experiment(ids, edges, signs, motor, stim, args.gain),
         'software': {'python': platform.python_version(), 'numpy': np.__version__},
+        'source_commit': __import__('os').environ.get('GITHUB_SHA'),
+        'actions_run_id': __import__('os').environ.get('GITHUB_RUN_ID'),
         'elapsed_seconds': time.monotonic() - started}
     write_json(args.out, result)
 
