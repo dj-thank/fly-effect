@@ -8,15 +8,10 @@ Original research code from the earlier Digital Fly Lab / digital-fly-organism w
 
 Optional dependencies retain their own licenses. FlyGym/NeuroMechFly and FlyMimic provide important models and separately acquired resources. No external meshes, muscle XML, trained weights, connectome tables, or upstream code trees are bundled. Runtime-generated files can contain local resource paths and are excluded from releases.
 
-The generic recorded-run viewer under `examples/replay-viewer/` contains no biological data,
-model meshes, rendered media, or third-party JavaScript. Recordings displayed with it retain their
-own provenance and licenses. In particular, renders of FlyGym/NeuroMechFly assets are not relicensed
-under Fly Effect's MIT license merely because the viewer can display them.
-
 Recorded-run packages that include FlyGym 2.1.0 / NeuroMechFly v2 geometry must retain
 `Copyright 2023-2026 The NeuroMechFly v2 Authors`, include the Apache License 2.0 text, identify
 rendering or other changes, and avoid implying upstream endorsement. A checked copy of the license
-is retained in `licenses/FlyGym-Apache-2.0.txt`.
+is retained in `examples/hae-recorded-replay/LICENSES/Apache-2.0.txt`.
 
 Recorded values derived from the FlyEM Male CNS connectome (`male-cns:v1.0`) are kept under the
 source's CC BY 4.0 attribution conditions. A distributed derivative must credit the HHMI Janelia
@@ -24,7 +19,8 @@ FlyEM, University of Cambridge Drosophila Connectomics Group, MRC Laboratory of 
 and Google Research collaboration; link the MaleCNS source and CC BY 4.0; identify transformations;
 and avoid describing simulated, reduced, uncalibrated output as raw biological observation. MANC
 motor-annotation values derived from Cheong et al. eLife 13:RP96084 carry the corresponding eLife
-CC BY provenance. Canonical CC BY links are retained in `licenses/CC-BY-4.0.url.txt`.
+CC BY provenance. Canonical CC BY links are retained in
+`examples/hae-recorded-replay/LICENSES/CC-BY-4.0.url.txt`.
 
 The public replay allowlist excludes the local `observation.npz` source recording, an absolute-path
 `body.xml`, raw connectome/MANC tables, raw model meshes, and FFmpeg/libx264 binaries. Compliance
