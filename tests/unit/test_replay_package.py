@@ -9,6 +9,7 @@ from scripts.replay_package import (
     build_manifest,
     verify_package,
 )
+from scripts.audit_release import reviewed_binary_paths
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -79,6 +80,16 @@ def test_published_hae_package_matches_authorized_manifest():
     for path in package.rglob("*"):
         if path.is_file() and path.suffix.lower() in {".cmd", ".html", ".js", ".json", ".md", ".txt"}:
             assert b"\r\n" not in path.read_bytes(), f"non-canonical CRLF in {path}"
+
+
+def test_release_audit_only_allows_manifest_reviewed_binaries():
+    reviewed, failures = reviewed_binary_paths(ROOT)
+    assert failures == []
+    assert reviewed == {
+        "examples/hae-recorded-replay/assets/actual-motion.mp4",
+        "examples/hae-recorded-replay/assets/pose-045010.png",
+        "examples/hae-recorded-replay/assets/replay-data.js",
+    }
 
 
 def test_replay_package_rejects_source_recording_and_raw_input(tmp_path):
