@@ -76,6 +76,9 @@ def test_published_hae_package_matches_authorized_manifest():
     manifest = json.loads((package / "PUBLIC_FILE_MANIFEST.json").read_text(encoding="utf-8"))
     assert manifest["publication_gate"] == AUTHORIZED_GATE
     assert verify_package(package) == []
+    for path in package.rglob("*"):
+        if path.is_file() and path.suffix.lower() in {".cmd", ".html", ".js", ".json", ".md", ".txt"}:
+            assert b"\r\n" not in path.read_bytes(), f"non-canonical CRLF in {path}"
 
 
 def test_replay_package_rejects_source_recording_and_raw_input(tmp_path):
