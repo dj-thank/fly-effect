@@ -6,6 +6,8 @@
   acceptance status, unit declarations and third-party provenance boundaries.
 - Add an allowlisted mixed-license replay-package manifest/verifier and explicit
   FlyGym Apache-2.0 plus MaleCNS/MANC CC BY attribution requirements.
+- Add the owner-authorized HAE recorded-run review package while retaining its
+  failed-F06, unresolved-route, uncalibrated, and mixed-license disclosures.
 
 ## 0.1.0a0 — unreleased
 

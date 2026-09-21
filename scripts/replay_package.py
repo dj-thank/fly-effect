@@ -10,6 +10,9 @@ from pathlib import Path, PurePosixPath
 
 
 MANIFEST_NAME = "PUBLIC_FILE_MANIFEST.json"
+BLOCKED_GATE = "PUBLIC_DISTRIBUTION_BLOCKED_PENDING_OWNER_AUTHORIZATION"
+AUTHORIZED_GATE = "PUBLIC_DISTRIBUTION_AUTHORIZED_BY_OWNER_20260922"
+PUBLICATION_GATES = {BLOCKED_GATE, AUTHORIZED_GATE}
 EXPECTED_FILES = {
     "README.md",
     "PROVENANCE.md",
@@ -79,7 +82,11 @@ def _entry(path: str, file_path: Path) -> dict[str, object]:
     }
 
 
-def build_manifest(root: Path, generated_at: str) -> dict[str, object]:
+def build_manifest(
+    root: Path,
+    generated_at: str,
+    publication_gate: str = BLOCKED_GATE,
+) -> dict[str, object]:
     root = root.resolve()
     files = package_files(root)
     unexpected = sorted(set(files) - EXPECTED_FILES)
@@ -91,7 +98,7 @@ def build_manifest(root: Path, generated_at: str) -> dict[str, object]:
         "schema": 2,
         "generated_at": generated_at,
         "scope": "HAE recorded-run exhibition review package",
-        "publication_gate": "PUBLIC_DISTRIBUTION_BLOCKED_PENDING_OWNER_AUTHORIZATION",
+        "publication_gate": publication_gate,
         "license_integration_status": "COMPLETE_FOR_REVIEW",
         "source_recording_included": False,
         "raw_inputs_included": False,
@@ -159,8 +166,8 @@ def verify_package(root: Path) -> list[str]:
 
     if manifest.get("schema") != 2:
         failures.append("manifest schema must be 2")
-    if manifest.get("publication_gate") != "PUBLIC_DISTRIBUTION_BLOCKED_PENDING_OWNER_AUTHORIZATION":
-        failures.append("publication gate is not fail-closed")
+    if manifest.get("publication_gate") not in PUBLICATION_GATES:
+        failures.append("publication gate is not a recognized explicit owner decision")
     if manifest.get("license_integration_status") != "COMPLETE_FOR_REVIEW":
         failures.append("license integration is not marked complete for review")
     if manifest.get("source_recording_included") is not False:
@@ -255,12 +262,17 @@ def main() -> None:
     build = subparsers.add_parser("build")
     build.add_argument("package", type=Path)
     build.add_argument("--generated-at", required=True)
+    build.add_argument(
+        "--publication-gate",
+        choices=sorted(PUBLICATION_GATES),
+        default=BLOCKED_GATE,
+    )
     verify = subparsers.add_parser("verify")
     verify.add_argument("package", type=Path)
     args = parser.parse_args()
 
     if args.command == "build":
-        manifest = build_manifest(args.package, args.generated_at)
+        manifest = build_manifest(args.package, args.generated_at, args.publication_gate)
         print(json.dumps({"status": "BUILT", "files": len(manifest["files"])}, ensure_ascii=False))
         return
 

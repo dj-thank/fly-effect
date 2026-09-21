@@ -3,7 +3,15 @@ from pathlib import Path
 
 import pytest
 
-from scripts.replay_package import EXPECTED_FILES, build_manifest, verify_package
+from scripts.replay_package import (
+    AUTHORIZED_GATE,
+    EXPECTED_FILES,
+    build_manifest,
+    verify_package,
+)
+
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 PROVENANCE = {
@@ -54,6 +62,20 @@ def test_replay_package_manifest_round_trip(tmp_path):
     make_package(tmp_path)
     build_manifest(tmp_path, "2026-09-22")
     assert verify_package(tmp_path) == []
+
+
+def test_replay_package_accepts_explicit_owner_authorization(tmp_path):
+    make_package(tmp_path)
+    manifest = build_manifest(tmp_path, "2026-09-22", AUTHORIZED_GATE)
+    assert manifest["publication_gate"] == AUTHORIZED_GATE
+    assert verify_package(tmp_path) == []
+
+
+def test_published_hae_package_matches_authorized_manifest():
+    package = ROOT / "examples" / "hae-recorded-replay"
+    manifest = json.loads((package / "PUBLIC_FILE_MANIFEST.json").read_text(encoding="utf-8"))
+    assert manifest["publication_gate"] == AUTHORIZED_GATE
+    assert verify_package(package) == []
 
 
 def test_replay_package_rejects_source_recording_and_raw_input(tmp_path):

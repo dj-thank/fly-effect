@@ -1,0 +1,111 @@
+{
+  "schema": 2,
+  "generated_at": "2026-09-22",
+  "scope": "HAE recorded-run exhibition review package",
+  "publication_gate": "PUBLIC_DISTRIBUTION_AUTHORIZED_BY_OWNER_20260922",
+  "license_integration_status": "COMPLETE_FOR_REVIEW",
+  "source_recording_included": false,
+  "raw_inputs_included": false,
+  "hash_scope": "All package files except PUBLIC_FILE_MANIFEST.json",
+  "files": [
+    {
+      "path": "LICENSES/Apache-2.0.txt",
+      "sha256": "02afa15750a169f0815ff1525dacf28d010f1dfd4cb119fc9e96bfca4f426eb4",
+      "bytes": 11362,
+      "classification": "THIRD_PARTY_NOTICE",
+      "license": "Third-party notice or license reference; not relicensed as Fly Effect MIT"
+    },
+    {
+      "path": "LICENSES/CC-BY-4.0.url.txt",
+      "sha256": "1c8934c1b8e0054bc783979aba76cedfa2563c67037a62cbe9766c5634fa3258",
+      "bytes": 327,
+      "classification": "THIRD_PARTY_NOTICE",
+      "license": "Third-party notice or license reference; not relicensed as Fly Effect MIT"
+    },
+    {
+      "path": "NOTICE.txt",
+      "sha256": "d11a84b193fa6ac232cc2eea9a0b55c50722414e3602d94564ca41b50bd73c78",
+      "bytes": 4542,
+      "classification": "THIRD_PARTY_NOTICE",
+      "license": "Third-party notice or license reference; not relicensed as Fly Effect MIT"
+    },
+    {
+      "path": "PROVENANCE.md",
+      "sha256": "cdeb71c8723e759d0a25080e0a4ade01df429257369e93fae200113b0bd1c891",
+      "bytes": 2028,
+      "classification": "FLY_EFFECT_ORIGINAL",
+      "license": "Fly Effect MIT; linked third-party media/data remain under their own terms"
+    },
+    {
+      "path": "README.md",
+      "sha256": "704ea2f78ef5b88336d844495d8985e6c3f04f25ed94373e42e683847b751b2a",
+      "bytes": 1628,
+      "classification": "FLY_EFFECT_ORIGINAL",
+      "license": "Fly Effect MIT; linked third-party media/data remain under their own terms"
+    },
+    {
+      "path": "SOURCE_ATTRIBUTIONS.json",
+      "sha256": "c0759f6fea74b7e79bb14de9d7eb9d6298528ff6b527a745c8985e5f5ca683cd",
+      "bytes": 6598,
+      "classification": "THIRD_PARTY_NOTICE",
+      "license": "Third-party notice or license reference; not relicensed as Fly Effect MIT"
+    },
+    {
+      "path": "assets/actual-motion.mp4",
+      "sha256": "d2d8c4c6e2b5b2ec9cbd7c4a40d06522456dd2d2afa950695152351a70a6aa7c",
+      "bytes": 510256,
+      "classification": "MIXED_LICENSE_REVIEW_READY",
+      "license": "Fly Effect MIT wrapper where applicable; FlyGym/NeuroMechFly Apache-2.0 and MaleCNS/MANC CC BY 4.0 provenance remain separate"
+    },
+    {
+      "path": "assets/pose-045010.png",
+      "sha256": "de3230bc92ca02625f9289a6976913c1762c03030f283a0eaadd8238ba2461a2",
+      "bytes": 132468,
+      "classification": "MIXED_LICENSE_REVIEW_READY",
+      "license": "Fly Effect MIT wrapper where applicable; FlyGym/NeuroMechFly Apache-2.0 and MaleCNS/MANC CC BY 4.0 provenance remain separate"
+    },
+    {
+      "path": "assets/replay-data.js",
+      "sha256": "8e5687c28dc4eaf8fb3c24732716bc9e53fe4e21c3391f7eafd8d7715ac5c2f7",
+      "bytes": 36334,
+      "classification": "MIXED_LICENSE_REVIEW_READY",
+      "license": "Fly Effect MIT wrapper where applicable; FlyGym/NeuroMechFly Apache-2.0 and MaleCNS/MANC CC BY 4.0 provenance remain separate"
+    },
+    {
+      "path": "assets/replay.js",
+      "sha256": "0d8adf8a749706a7bcbb5e67438e814a49d5fb6d44d295a53bc69475c1f3ae91",
+      "bytes": 3793,
+      "classification": "FLY_EFFECT_ORIGINAL",
+      "license": "Fly Effect MIT; linked third-party media/data remain under their own terms"
+    },
+    {
+      "path": "index.html",
+      "sha256": "9fbf0b16d98427fccd08e00783152be838c669696ce10648b07a60b1357dd890",
+      "bytes": 4808,
+      "classification": "FLY_EFFECT_ORIGINAL",
+      "license": "Fly Effect MIT; linked third-party media/data remain under their own terms"
+    },
+    {
+      "path": "launch.cmd",
+      "sha256": "e1c04466e271f50a3d7d23bbf11ca643b235213703c5f776b77f7cd1a3a7c2cc",
+      "bytes": 117,
+      "classification": "FLY_EFFECT_ORIGINAL",
+      "license": "Fly Effect MIT; linked third-party media/data remain under their own terms"
+    },
+    {
+      "path": "replay.html",
+      "sha256": "c0480530415805797248bb04a911443e4244137cce83e5a3c2ad5dd26a1460a4",
+      "bytes": 6399,
+      "classification": "FLY_EFFECT_ORIGINAL",
+      "license": "Fly Effect MIT; linked third-party media/data remain under their own terms"
+    }
+  ],
+  "excluded_from_package": [
+    "observation.npz",
+    "body.xml",
+    "MaleCNS/MANC raw tables",
+    "FlyGym/NeuroMechFly raw meshes",
+    "FFmpeg/libx264 binaries"
+  ],
+  "integrity_note": "Hashes prove local package bytes only and do not authorize publication."
+}
