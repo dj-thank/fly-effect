@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recorded-run replay</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: #f4f5f7;
+            color: #1d2129;
+        }
+
+        main {
+            max-width: 1080px;
+            margin: auto;
+            padding: 24px;
+        }
+
+        .stage {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+            gap: 16px;
+        }
+
+        video {
+            width: 100%;
+            background: #111;
+            border: 1px solid #ccd1d8;
+        }
+
+        .panel {
+            display: grid;
+            gap: 8px;
+        }
+
+        .box {
+            background: #fff;
+            border: 1px solid #ccd1d8;
+            padding: 10px;
+        }
+
+        .label {
+            font-size: 12px;
+            color: #68717d;
+        }
+
+        .value {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+        }
+
+        .feet {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+        }
+
+        .foot {
+            text-align: center;
+            font-size: 11px;
+        }
+
+        .dot {
+            height: 9px;
+            background: #d8dbe0;
+        }
+
+        .foot.on .dot {
+            background: #168b4e;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        input {
+            flex: 1;
+        }
+
+        footer {
+            margin-top: 18px;
+            font-size: 12px;
+            color: #68717d;
+        }
+
+        @media (max-width: 760px) {
+            .stage {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Recorded-run replay</h1>
+        <p><span id="run"></span> · <strong id="acceptance"></strong></p>
+        <div class="stage">
+            <video id="video" src="motion.mp4" poster="poster.png" preload="metadata" playsinline></video>
+            <div class="panel">
+                <div class="box">
+                    <div class="label">Recorded time</div>
+                    <div class="value" id="time"></div>
+                </div>
+                <div class="box">
+                    <div class="label">Recorded foot contacts</div>
+                    <div class="feet">
+                        <div class="foot" id="foot-lf"><div class="dot"></div>LF</div>
+                        <div class="foot" id="foot-lm"><div class="dot"></div>LM</div>
+                        <div class="foot" id="foot-lh"><div class="dot"></div>LH</div>
+                        <div class="foot" id="foot-rf"><div class="dot"></div>RF</div>
+                        <div class="foot" id="foot-rm"><div class="dot"></div>RM</div>
+                        <div class="foot" id="foot-rh"><div class="dot"></div>RH</div>
+                    </div>
+                </div>
+                <div class="box">
+                    <div class="label">Cumulative neural events</div>
+                    <div class="value" id="spikes"></div>
+                </div>
+                <div class="box">
+                    <div class="label">Cumulative sensory events</div>
+                    <div class="value" id="sensory"></div>
+                </div>
+                <div class="box">
+                    <div class="label">Muscle-force aggregate</div>
+                    <div class="value" id="force"></div>
+                </div>
+                <div class="box">
+                    <div class="label">Root xyz</div>
+                    <div class="value" id="root"></div>
+                </div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="play" type="button">Play</button>
+            <input id="timeline" type="range" min="0" value="0" step="1">
+        </div>
+        <footer>
+            This viewer presents a recording. It does not establish biological calibration, autonomy,
+            or behavioral acceptance. Check the recording's provenance and redistribution terms before
+            publication.
+        </footer>
+    </main>
+    <script src="replay-data.js"></script>
+    <script src="viewer.js"></script>
+</body>
+</html>

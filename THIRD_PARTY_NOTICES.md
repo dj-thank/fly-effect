@@ -8,6 +8,11 @@ Original research code from the earlier Digital Fly Lab / digital-fly-organism w
 
 Optional dependencies retain their own licenses. FlyGym/NeuroMechFly and FlyMimic provide important models and separately acquired resources. No external meshes, muscle XML, trained weights, connectome tables, or upstream code trees are bundled. Runtime-generated files can contain local resource paths and are excluded from releases.
 
+The generic recorded-run viewer under `examples/replay-viewer/` contains no biological data,
+model meshes, rendered media, or third-party JavaScript. Recordings displayed with it retain their
+own provenance and licenses. In particular, renders of FlyGym/NeuroMechFly assets are not relicensed
+under Fly Effect's MIT license merely because the viewer can display them.
+
 References:
 
 - [NeuroMechFly](https://neuromechfly.org/)
@@ -17,4 +22,3 @@ References:
 - [Eon's integration and limitations](https://eon.systems/updates/embodied-brain-emulation)
 
 Citations are not endorsements or license grants. Additional material requires a source, revision, and applicable terms before redistribution.
-
