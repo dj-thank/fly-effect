@@ -13,9 +13,29 @@ model meshes, rendered media, or third-party JavaScript. Recordings displayed wi
 own provenance and licenses. In particular, renders of FlyGym/NeuroMechFly assets are not relicensed
 under Fly Effect's MIT license merely because the viewer can display them.
 
+Recorded-run packages that include FlyGym 2.1.0 / NeuroMechFly v2 geometry must retain
+`Copyright 2023-2026 The NeuroMechFly v2 Authors`, include the Apache License 2.0 text, identify
+rendering or other changes, and avoid implying upstream endorsement. A checked copy of the license
+is retained in `licenses/FlyGym-Apache-2.0.txt`.
+
+Recorded values derived from the FlyEM Male CNS connectome (`male-cns:v1.0`) are kept under the
+source's CC BY 4.0 attribution conditions. A distributed derivative must credit the HHMI Janelia
+FlyEM, University of Cambridge Drosophila Connectomics Group, MRC Laboratory of Molecular Biology,
+and Google Research collaboration; link the MaleCNS source and CC BY 4.0; identify transformations;
+and avoid describing simulated, reduced, uncalibrated output as raw biological observation. MANC
+motor-annotation values derived from Cheong et al. eLife 13:RP96084 carry the corresponding eLife
+CC BY provenance. Canonical CC BY links are retained in `licenses/CC-BY-4.0.url.txt`.
+
+The public replay allowlist excludes the local `observation.npz` source recording, an absolute-path
+`body.xml`, raw connectome/MANC tables, raw model meshes, and FFmpeg/libx264 binaries. Compliance
+with these terms does not itself authorize publication.
+
 References:
 
 - [NeuroMechFly](https://neuromechfly.org/)
+- [FlyGym 2.1.0](https://github.com/NeLy-EPFL/flygym/releases/tag/v2.1.0)
+- [FlyEM Male CNS download and license](https://male-cns.janelia.org/download/)
+- [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 - [FlyMimic](https://arxiv.org/abs/2509.06426)
 - [CPG research](https://doi.org/10.1101/2025.09.12.675944)
 - [Motor-unit physiology](https://elifesciences.org/articles/56754)

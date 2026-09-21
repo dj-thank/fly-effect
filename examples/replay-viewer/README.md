@@ -17,5 +17,23 @@ connectome tables, model meshes, recordings, or rendered derivatives unless
 their separate redistribution terms have been checked and their notices are
 included.
 
+For a mixed-license recorded-run package, keep these files reachable from the
+viewer and list them in a hash-and-size manifest:
+
+- `NOTICE.txt`: upstream copyright, attribution, license, modification, and
+  simulated/uncalibrated disclosures.
+- `SOURCE_ATTRIBUTIONS.json`: machine-readable sources, versions, URLs,
+  licenses, transformations, and affected files.
+- `LICENSES/Apache-2.0.txt`: the full Apache 2.0 text when FlyGym 2.1.0 /
+  NeuroMechFly v2 rendered geometry is included.
+- `LICENSES/CC-BY-4.0.url.txt`: canonical CC BY 4.0 deed/legal-code links for
+  MaleCNS/MANC-derived values, together with the required source citations.
+
+The package must state that changes were made and that the output is a
+simulated, uncalibrated recording rather than raw biological observation.
+Keep `observation.npz`, absolute-path `body.xml`, raw connectome/MANC tables,
+and FlyGym meshes out of the viewer package. Repository copies of the relevant
+license references are in [`licenses/`](../../licenses/).
+
 Open `index.html` directly. The example intentionally has no real media or
 biological dataset.

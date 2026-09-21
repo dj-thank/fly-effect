@@ -8,12 +8,20 @@ window.REPLAY_DATA = {
         "video_sha256": "replace-with-full-sha256",
         "acceptance_passed": false,
         "pose_interpolation": false,
+        "recording_kind": "simulated_recorded_run",
+        "calibration_status": "uncalibrated",
+        "changes_made": true,
+        "source_recording_included": false,
+        "raw_inputs_included": false,
         "feet": ["lf", "lm", "lh", "rf", "rm", "rh"],
         "force_units": "declare units and calibration status",
         "provenance": {
             "generated_from_recorded_run": true,
             "third_party_assets_in_render": false,
-            "redistribution_reviewed": false
+            "redistribution_reviewed": false,
+            "notice_path": "NOTICE.txt",
+            "source_attributions_path": "SOURCE_ATTRIBUTIONS.json",
+            "licenses": []
         }
     },
     "time_s": [0],

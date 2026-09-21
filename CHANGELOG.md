@@ -4,6 +4,8 @@
 
 - Add a data-free recorded-run replay viewer example with explicit source hashes,
   acceptance status, unit declarations and third-party provenance boundaries.
+- Add an allowlisted mixed-license replay-package manifest/verifier and explicit
+  FlyGym Apache-2.0 plus MaleCNS/MANC CC BY attribution requirements.
 
 ## 0.1.0a0 — unreleased
 

@@ -58,6 +58,11 @@
     });
     document.getElementById("run").textContent = data.meta.run;
     document.getElementById("acceptance").textContent = data.meta.acceptance_passed ? "accepted" : "not accepted";
+    document.getElementById("recording-boundary").textContent = [
+        data.meta.recording_kind,
+        data.meta.calibration_status,
+        data.meta.changes_made ? "modified" : "unmodified"
+    ].join(" · ");
     update(0);
     tick();
 })();
