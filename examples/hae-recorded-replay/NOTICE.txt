@@ -1,0 +1,92 @@
+HAE exhibition — hae-organism third-party notice
+=================================================
+
+This notice is integrated with the recorded-run exhibit package. License
+integration is complete for review. The project owner authorized publication
+through a reviewable pull request on 2026-09-22 under gate
+PUBLIC_DISTRIBUTION_AUTHORIZED_BY_OWNER_20260922.
+
+The included recording is simulated and uncalibrated. Changes were made: the
+local simulation output was frame-selected, reduced, serialized, and rendered
+for browser replay. It is not a raw biological recording.
+
+1. Original Fly Effect viewer code
+-----------------------------------
+The HTML, CSS and JavaScript viewer code is original Fly Effect contributor
+code and is covered by the Fly Effect MIT licence. The MIT licence does not
+relicense any external data, meshes or rendered media referenced by the
+viewer. See the repository's `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+
+2. FlyGym 2.1.0 / NeuroMechFly v2 geometry
+-------------------------------------------
+The fly geometry rendered in assets/actual-motion.mp4 and
+assets/pose-045010.png comes from FlyGym 2.1.0 / NeuroMechFly v2.  The
+upstream copyright notice is:
+
+  Copyright 2023-2026 The NeuroMechFly v2 Authors
+
+Upstream project: https://github.com/NeLy-EPFL/flygym
+Release: https://github.com/NeLy-EPFL/flygym/releases/tag/v2.1.0
+Upstream licence: Apache License 2.0
+  https://www.apache.org/licenses/LICENSE-2.0
+Upstream source licence text is included in
+LICENSES/Apache-2.0.txt in this audit bundle.
+Reference paper: https://doi.org/10.1038/s41592-024-02497-y
+
+The MP4 and PNG are rendered object-form derivatives.  They are not
+relicensed under Fly Effect's MIT licence.  A public copy must keep this
+attribution, provide the Apache-2.0 licence, and must not imply endorsement
+by the NeuroMechFly authors or EPFL.
+
+3. MaleCNS v1.0 connectome-derived material (CC BY 4.0)
+--------------------------------------------
+The neural IDs, connectivity/annotation-derived values and recorded event
+series used by the exhibit originate from the FlyEM Male CNS (male-cns:v1.0)
+source data and the local simulation.  The official source states that the
+Male CNS is licensed under CC-BY:
+
+  https://male-cns.janelia.org/download/
+  https://creativecommons.org/licenses/by/4.0/
+
+Suggested attribution (retain in a visible notice or documentation):
+
+  FlyEM Male CNS connectome (male-cns:v1.0), a collaboration of HHMI
+  Janelia FlyEM, the University of Cambridge Drosophila Connectomics Group,
+  the MRC Laboratory of Molecular Biology, and Google Research; see
+  https://male-cns.janelia.org/download/ and Berg et al., “Sexual dimorphism
+  in the complete Drosophila male central nervous system connectome,” Cell
+  189 (2026), https://doi.org/10.1016/j.cell.2026.08.015.
+
+The replay-data.js file and any separately distributed observation.npz are
+conservative-treated as CC-BY-derived/adapted material.  A public copy must
+identify that it is a transformed, simulated/reduced recording, provide the
+source URL and CC-BY-4.0 link, and state that changes were made.  It must not
+be described as raw biological recording or as a validated biological clone.
+
+4. MANC motor annotation supplement
+------------------------------------
+The motor-route audit also reads Supplementary file 3 of Cheong et al.,
+“Organization of circuits linking descending input to motor output in the
+Drosophila Male Adult Nerve Cord connectome,” eLife 13:RP96084 (2026):
+
+  Article: https://doi.org/10.7554/eLife.96084.3
+  Supplement 3:
+  https://cdn.elifesciences.org/articles/96084/elife-96084-supp3-v1.csv
+  eLife reuse terms: https://elifesciences.org/terms
+
+eLife's official policy states that its articles and related content are
+CC-BY (CC BY 4.0 for the article corpus).  The supplement is not copied into
+the current exhibition directory, but its attribution remains part of the
+provenance of replay-data.js and the F06 motor audit.  Re-check any per-file
+exception notice before a future raw-table redistribution.
+
+5. Encoding tool
+----------------
+FFmpeg/libx264 was used to encode the MP4.  No FFmpeg binary, library, audio,
+font or network resource is bundled in the exhibit.  Codec patent/commercial
+deployment questions were not assessed by this notice; they are separate from
+the copyright licences above.
+
+Publication authorization does not change the scientific result: F06 remains
+unmet, five required motor units and twelve tendon routes remain unresolved,
+and the simulated force and sensory values remain uncalibrated.
