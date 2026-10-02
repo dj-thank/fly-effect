@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAEオーガニズム — 記録済み運動リプレイ</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif; background: #f4f5f7; color: #1d2129; }
+  header { padding: 18px 28px; border-bottom: 1px solid #d8dbe0; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  nav a { font-size: 13px; color: #2557a7; text-decoration: none; }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; }
+  .intro { font-size: 14px; line-height: 1.7; margin: 0 0 20px; }
+  .status { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 22px; }
+  .cell { background: #fff; border: 1px solid #d8dbe0; border-radius: 8px; padding: 12px 14px; }
+  .cell .k { font-size: 11px; color: #7a8290; margin-bottom: 4px; }
+  .cell .v { font-size: 15px; font-weight: 600; }
+  .v.warn { color: #a05a00; }
+  .v.ok { color: #1e7a46; }
+  .thumb { width: 100%; max-width: 480px; border-radius: 6px; border: 1px solid #d8dbe0; display: block; margin-bottom: 22px; background: #111; }
+  .actions { display: flex; gap: 12px; align-items: center; }
+  .enter { font-size: 15px; font-weight: 600; color: #fff; background: #2557a7; padding: 10px 26px; border-radius: 6px; text-decoration: none; }
+  .enter:hover { background: #1d468a; }
+  .back { font-size: 13px; color: #2557a7; text-decoration: none; }
+  .note { margin-top: 22px; font-size: 12px; color: #7a8290; line-height: 1.7; }
+  .rights { margin-top: 18px; padding: 14px; background: #fff8e6; border: 1px solid #ead9a8; border-radius: 8px; font-size: 12px; line-height: 1.7; }
+  .rights a { color: #2557a7; }
+  code { background: #eceef1; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>HAEオーガニズム — 記録済み運動リプレイ</h1>
+  <nav><a href="replay.html">再生画面へ</a></nav>
+</header>
+<main>
+  <p class="intro">
+    保存済みの実験結果 <code>f06-seed1-closed-loop-10s-20260917</code>（10秒・seed 1・実感覚入力→CNS→筋→MuJoCoの閉ループ記録）を、
+    映像と記録データの同期表示でそのまま再生します。これは未較正のシミュレーション記録であり、
+    実写・生体記録ではありません。補間・新規シミュレーション・歩行達成の主張はありません。
+  </p>
+  <div class="status">
+    <div class="cell"><div class="k">自律歩行（F06）</div><div class="v warn">未達 — 未検証</div></div>
+    <div class="cell"><div class="k">必須運動ユニット経路</div><div class="v" id="motor">—</div></div>
+    <div class="cell"><div class="k">腱経路</div><div class="v" id="tendon">—</div></div>
+    <div class="cell"><div class="k">生体較正</div><div class="v warn">なし（仮定パラメータ）</div></div>
+    <div class="cell"><div class="k">この展示の計算</div><div class="v ok">記録の再生のみ</div></div>
+  </div>
+  <img class="thumb" src="assets/pose-045010.png" alt="記録された六脚個体の姿勢（tick 45010）">
+  <div class="actions">
+    <a class="enter" href="replay.html">再生画面へ進む</a>
+    <a class="back" href="NOTICE.txt">NOTICEを確認</a>
+  </div>
+  <p class="note">
+    未解決の明示：必須運動ユニット 5件（MNhl87/88系・右前脚1件）と転写テンプレート腱 12件は、
+    元CSV・MaleCNS注釈・接続推定のいずれでも根拠が得られず未割当のままです。
+    詳細は監査レポート <code>outputs/f06-motor-tendon-resolution-20260919</code> を参照してください。
+  </p>
+  <section class="rights">
+    <strong>来歴・ライセンス：</strong>
+    <a href="NOTICE.txt">NOTICE</a> ·
+    <a href="PROVENANCE.md">変更と来歴</a> ·
+    <a href="SOURCE_ATTRIBUTIONS.json">source attribution</a> ·
+    <a href="LICENSES/Apache-2.0.txt">Apache-2.0</a> ·
+    <a href="LICENSES/CC-BY-4.0.url.txt">CC BY 4.0</a>。
+    Fly Effect MITは第三者geometry・データ・renderを再許諾しません。公開はowner承認待ちです。
+  </section>
+</main>
+<script src="assets/replay-data.js"></script>
+<script>
+  var m = window.REPLAY_DATA.meta;
+  document.getElementById('motor').textContent =
+    m.motor_coverage.mapped + '/' + m.motor_coverage.total + ' (' + m.motor_coverage.percent.toFixed(1) + '%)';
+  document.getElementById('tendon').textContent =
+    m.tendon_coverage.mapped + '/' + m.tendon_coverage.total + ' (' + m.tendon_coverage.percent.toFixed(1) + '%)';
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+{
+  "schema": 1,
+  "generated_at": "2026-09-22",
+  "scope": "HAE recorded-run exhibition materials and their upstream source conditions",
+  "current_publication_gate": "PUBLIC_DISTRIBUTION_AUTHORIZED_BY_OWNER_20260922",
+  "license_integration_status": "COMPLETE_FOR_REVIEW",
+  "source_recording_included": false,
+  "raw_inputs_included": false,
+  "changes_made": [
+    "Selected 300 recorded simulation frames without pose interpolation.",
+    "Rendered FlyGym/NeuroMechFly geometry to silent MP4 and PNG object-form derivatives.",
+    "Reduced simulation arrays to frame-synchronised browser replay values."
+  ],
+  "sources": [
+    {
+      "id": "fly_effect_code",
+      "name": "Fly Effect viewer code",
+      "license": "MIT",
+      "source_urls": [
+        "https://github.com/dj-thank/fly-effect"
+      ],
+      "local_evidence": [
+        "work/fly-effect/LICENSE",
+        "work/fly-effect/THIRD_PARTY_NOTICES.md",
+        "outputs/exhibition-20260923/hae-organism/index.html",
+        "outputs/exhibition-20260923/hae-organism/replay.html",
+        "outputs/exhibition-20260923/hae-organism/assets/replay.js"
+      ],
+      "used_by": [
+        "outputs/exhibition-20260923/hae-organism/index.html",
+        "outputs/exhibition-20260923/hae-organism/replay.html",
+        "outputs/exhibition-20260923/hae-organism/assets/replay.js",
+        "outputs/exhibition-20260923/hae-organism/launch.cmd"
+      ],
+      "conditions": [
+        "Keep the MIT notice for original code.",
+        "Do not apply MIT to external data, meshes or renders."
+      ],
+      "verification": "local repository files; no external data is bundled by the generic viewer"
+    },
+    {
+      "id": "flygym_2_1_0",
+      "name": "FlyGym 2.1.0 / NeuroMechFly v2 model assets",
+      "license": "Apache-2.0",
+      "copyright": "Copyright 2023-2026 The NeuroMechFly v2 Authors",
+      "source_urls": [
+        "https://github.com/NeLy-EPFL/flygym/tree/v2.1.0",
+        "https://github.com/NeLy-EPFL/flygym/blob/v2.1.0/LICENSE",
+        "https://github.com/NeLy-EPFL/flygym/releases/tag/v2.1.0",
+        "https://doi.org/10.1038/s41592-024-02497-y"
+      ],
+      "local_evidence": [
+        "work/runtime-py312/site-packages/flygym-2.1.0.dist-info/METADATA",
+        "work/runtime-py312/site-packages/flygym-2.1.0.dist-info/licenses/LICENSE",
+        "outputs/f06-seed1-closed-loop-10s-20260917/body.xml",
+        "outputs/f06-seed1-closed-loop-10s-20260917/identity.json"
+      ],
+      "used_by": [
+        "outputs/exhibition-20260923/hae-organism/assets/actual-motion.mp4",
+        "outputs/exhibition-20260923/hae-organism/assets/pose-045010.png"
+      ],
+      "conditions": [
+        "Provide a copy of Apache-2.0 when distributing the rendered derivatives.",
+        "Retain attribution and identify modifications/transformations where applicable.",
+        "Do not imply endorsement or grant FlyGym/NeuroMechFly trademarks."
+      ],
+      "verification": "primary upstream release, pyproject metadata and license text checked"
+    },
+    {
+      "id": "malecns_v1",
+      "name": "FlyEM Male CNS connectome male-cns:v1.0",
+      "license": "CC BY 4.0",
+      "source_urls": [
+        "https://male-cns.janelia.org/download/",
+        "https://creativecommons.org/licenses/by/4.0/",
+        "https://creativecommons.org/licenses/by/4.0/legalcode.en",
+        "https://doi.org/10.1016/j.cell.2026.08.015"
+      ],
+      "producers": "HHMI Janelia FlyEM, University of Cambridge Drosophila Connectomics Group, MRC Laboratory of Molecular Biology, and Google Research",
+      "local_evidence": [
+        "work/digital-fly-research/jobs/digital-fly/malecns/acquisition-runs/run-34211956616/acquisition.json",
+        "work/digital-fly-research/jobs/digital-fly/malecns/acquisition-runs/run-34211956616/release.json",
+        "work/data/graph/graph_audit.json",
+        "outputs/f06-seed1-closed-loop-10s-20260917/result.json",
+        "outputs/exhibition-20260923/hae-organism/PROVENANCE.md"
+      ],
+      "used_by": [
+        "outputs/exhibition-20260923/hae-organism/assets/replay-data.js",
+        "outputs/f06-seed1-closed-loop-10s-20260917/observation.npz"
+      ],
+      "conditions": [
+        "Give appropriate credit, link the CC BY 4.0 license and source URL, and identify changes.",
+        "Do not imply endorsement by the source institutions.",
+        "Treat the simulated/reduced recording as transformed data, not a raw biological recording.",
+        "If a substantial database portion is redistributed, preserve the CC BY attribution information."
+      ],
+      "verification": "official MaleCNS download page and CC BY 4.0 legal code checked"
+    },
+    {
+      "id": "manc_elife_96084",
+      "name": "MANC motor annotation Supplementary file 3",
+      "license": "CC BY 4.0 (eLife default; no contrary per-file notice observed)",
+      "source_urls": [
+        "https://doi.org/10.7554/eLife.96084.3",
+        "https://cdn.elifesciences.org/articles/96084/elife-96084-supp3-v1.csv",
+        "https://elifesciences.org/terms",
+        "https://elifesciences.github.io/developer-resources/"
+      ],
+      "citation": "Cheong HSJ et al. (2026), Organization of circuits linking descending input to motor output in the Drosophila Male Adult Nerve Cord connectome, eLife 13:RP96084.",
+      "local_evidence": [
+        "work/data/manc-supplements/elife-96084-supp3-v1.csv",
+        "outputs/f06-motor-tendon-resolution-20260919/report.json",
+        "outputs/f06-seed1-closed-loop-10s-20260917/identity.json"
+      ],
+      "used_by": [
+        "outputs/exhibition-20260923/hae-organism/assets/replay-data.js"
+      ],
+      "conditions": [
+        "Cite the eLife article and link CC BY 4.0/eLife terms.",
+        "Re-check a future raw-table package for any file-specific exception."
+      ],
+      "verification": "official eLife article figures/data page and eLife terms/developer policy checked"
+    },
+    {
+      "id": "ffmpeg_libx264",
+      "name": "FFmpeg/libx264 encoding tool",
+      "license": "Not redistributed",
+      "source_urls": [],
+      "local_evidence": [
+        "work/digital-fly-organism/render_recorded_motion.py",
+        "outputs/f06-seed1-closed-loop-10s-20260917/actual-motion.json"
+      ],
+      "used_by": [
+        "outputs/exhibition-20260923/hae-organism/assets/actual-motion.mp4"
+      ],
+      "conditions": [
+        "No FFmpeg/libx264 binary, audio, font or network resource is bundled.",
+        "Codec patent/commercial deployment issues were not assessed."
+      ],
+      "verification": "local encoder command and output receipt checked"
+    }
+  ]
+}

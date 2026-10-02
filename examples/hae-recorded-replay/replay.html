@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>記録リプレイ — seed1 10秒クローズドループ</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif; background: #f4f5f7; color: #1d2129; }
+  header { padding: 14px 24px; border-bottom: 1px solid #d8dbe0; background: #fff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 4px; background: #fff3d6; color: #7a5a00; border: 1px solid #ead9a8; }
+  nav a { font-size: 13px; color: #2557a7; text-decoration: none; margin-left: 14px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 20px 24px 40px; }
+  .stage { display: flex; gap: 18px; flex-wrap: wrap; }
+  .video-wrap { flex: 1 1 640px; min-width: 320px; }
+  video { width: 100%; display: block; background: #111; border-radius: 8px; border: 1px solid #d8dbe0; }
+  .panel { flex: 0 0 320px; display: flex; flex-direction: column; gap: 10px; }
+  .box { background: #fff; border: 1px solid #d8dbe0; border-radius: 8px; padding: 12px 14px; }
+  .box .k { font-size: 11px; color: #7a8290; margin-bottom: 6px; }
+  .box .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .feet { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .foot { text-align: center; }
+  .dot { width: 100%; height: 10px; border-radius: 5px; background: #d8dbe0; margin-bottom: 4px; }
+  .foot.on .dot { background: #1e9e5a; }
+  .foot .lbl { font-size: 10px; color: #5b6470; }
+  .controls { margin-top: 16px; background: #fff; border: 1px solid #d8dbe0; border-radius: 8px; padding: 14px 16px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  button { font: inherit; cursor: pointer; border: 1px solid #c4cad2; background: #fff; border-radius: 6px; padding: 6px 14px; }
+  button:hover { background: #eceef1; }
+  button.primary { background: #2557a7; border-color: #2557a7; color: #fff; font-weight: 600; }
+  button.primary:hover { background: #1d468a; }
+  button.speed.active { background: #1d2129; border-color: #1d2129; color: #fff; }
+  input[type="range"] { flex: 1 1 260px; accent-color: #2557a7; }
+  canvas { width: 100%; height: 90px; display: block; margin-top: 12px; background: #fff; border: 1px solid #d8dbe0; border-radius: 8px; }
+  .cap { font-size: 11px; color: #7a8290; margin-top: 6px; }
+  footer { max-width: 1180px; margin: 0 auto; padding: 0 24px 32px; font-size: 11.5px; color: #7a8290; line-height: 1.8; }
+  code { background: #eceef1; padding: 1px 5px; border-radius: 4px; font-size: 10.5px; word-break: break-all; }
+</style>
+</head>
+<body>
+<header>
+  <h1>記録リプレイ — f06-seed1-closed-loop-10s（seed 1, 10秒）<span class="badge">未較正のシミュレーション記録 / 歩行未達</span></h1>
+  <nav>
+    <a href="index.html">展示入口へ戻る</a>
+    <a href="NOTICE.txt">NOTICEを確認</a>
+  </nav>
+</header>
+<main>
+  <div class="stage">
+    <div class="video-wrap">
+      <video id="video" src="assets/actual-motion.mp4" poster="assets/pose-045010.png" preload="auto" playsinline></video>
+      <div class="cap">保存済み <code>observation.npz</code> の姿勢列を30fpsでそのまま描画。補間・新規計算なし。</div>
+    </div>
+    <div class="panel">
+      <div class="box"><div class="k">時刻（記録時刻）</div><div class="v" id="time">0.00 / 10.00 s</div></div>
+      <div class="box">
+        <div class="k">脚接地フラグ（記録値・6脚）</div>
+        <div class="feet">
+          <div class="foot" id="foot-lf"><div class="dot"></div><div class="lbl">LF 前左</div></div>
+          <div class="foot" id="foot-lm"><div class="dot"></div><div class="lbl">LM 中左</div></div>
+          <div class="foot" id="foot-lh"><div class="dot"></div><div class="lbl">LH 後左</div></div>
+          <div class="foot" id="foot-rf"><div class="dot"></div><div class="lbl">RF 前右</div></div>
+          <div class="foot" id="foot-rm"><div class="dot"></div><div class="lbl">RM 中右</div></div>
+          <div class="foot" id="foot-rh"><div class="dot"></div><div class="lbl">RH 後右</div></div>
+        </div>
+      </div>
+      <div class="box"><div class="k">CNSスパイク累積（記録値）</div><div class="v" id="spikes">0</div></div>
+      <div class="box"><div class="k">感覚イベント累積（記録値）</div><div class="v" id="sensory">0</div></div>
+      <div class="box"><div class="k">筋力合計（内部単位・未較正）</div><div class="v" id="force">0</div></div>
+      <div class="box"><div class="k">体中心位置 xyz（内部長単位・mm想定）</div><div class="v" id="root">—</div></div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="row">
+      <button class="primary" id="play">再生</button>
+      <button class="speed" data-rate="0.25">0.25x</button>
+      <button class="speed" data-rate="0.5">0.5x</button>
+      <button class="speed active" data-rate="1">1x</button>
+      <button class="speed" data-rate="2">2x</button>
+      <input type="range" id="timeline" min="0" max="299" value="0" step="1">
+    </div>
+    <canvas id="spark" width="1140" height="90"></canvas>
+    <div class="cap">下のグラフは同じ記録の筋力合計系列です。縦線が現在フレーム。スライダーで任意フレームへ移動できます。</div>
+  </div>
+</main>
+<footer>
+  除外済みsource recording <code>observation.npz</code>（sha256 <code>846de033…</code>）から変換／
+  映像 <code>actual-motion.mp4</code>（sha256 <code>d2d8c4c6…</code>・300フレーム・pose_interpolation: false）。
+  本画面の数値は同じ未較正シミュレーション記録の変換値です。歩行達成・個体クローン完成・生体較正の主張はありません。<br>
+  <a href="NOTICE.txt">NOTICE</a> ·
+  <a href="PROVENANCE.md">変更と来歴</a> ·
+  <a href="SOURCE_ATTRIBUTIONS.json">source attribution</a> ·
+  <a href="LICENSES/Apache-2.0.txt">Apache-2.0</a> ·
+  <a href="LICENSES/CC-BY-4.0.url.txt">CC BY 4.0</a>
+</footer>
+<script src="assets/replay-data.js"></script>
+<script src="assets/replay.js"></script>
+</body>
+</html>
