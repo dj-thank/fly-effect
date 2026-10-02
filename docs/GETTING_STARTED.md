@@ -1,10 +1,14 @@
 # 導入
 
-Python 3.11または3.12とGitを用意し、仮想環境でREADMEの手順を実行してください。PowerShellでActivate.ps1を実行できない場合、設定を変えず仮想環境のPythonを直接指定できます。
+基本開発・人工回路はPython 3.11または3.12、身体・全CNSはPython 3.12とGitを用意し、仮想環境でREADMEの手順を実行してください。PowerShellでActivate.ps1を実行できない場合、設定を変えず仮想環境のPythonを直接指定できます。
 
 - 基本開発: python -m pip install -e ".[dev]"
 - 人工回路: python -m pip install -e ".[dev,neural]"
-- 身体・全CNS: python -m pip install -e ".[dev,simulation]"
+- 人工力学検査: python -m pip install -e ".[dev,neural,mechanics]"
+- 神経データ不要の身体診断（Python 3.12）: python -m pip install -e ".[body]"
+- 身体・全CNS（Python 3.12）: python -m pip install -e ".[dev,simulation]"
+
+固定したFlyGymのPython要件は >=3.12,<3.15 です。まず [筋力・身体の切り分け検証](MECHANICAL_VALIDATION.md) で、人工モデルの力学検査と同一六脚モデルへの対照刺激を実行できます。
 
 simulationにはGitHub依存と、別途取得する大型アセットが必要になる場合があります。doctorは不足物を表示し、--check-dataで外部グラフのハッシュも検査します。診断は実験の成功を認定しません。デモには新しい出力ディレクトリを指定してください。
 

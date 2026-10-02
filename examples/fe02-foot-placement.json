@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "kind": "organism_candidate",
+  "status": "planned",
+  "question": "Can independent bounded six-leg placement recover contact-only root balance?",
+  "hypothesis": "A fixed nine-target IK grid plus unchanged neutral control improves on common-offset hind-only contacts without model/force changes.",
+  "seed": 0,
+  "units": "Native MuJoCo model units, exactly as the existing source study; not animal measurements",
+  "budget": {
+    "wall_seconds": 600,
+    "memory_mib": 8192
+  },
+  "controls": [
+    "unchanged neutral initial pose on the same unanchored-root variant",
+    "analytic symmetric support and unsupported hind-only toy models",
+    "original nine-pose A/B evidence preserved unchanged"
+  ],
+  "success_criterion": "One foot-only root-balanced initial placement; full muscle static feasibility is a distinct further gate, never standing/walking.",
+  "falsification": "No root-balanced placement in this exact grid rejects this bounded hypothesis, not all poses or the overall organism goal. Solver budget exhaustion is inconclusive.",
+  "evidence": [],
+  "biological_validation": false,
+  "parameters": {
+    "id": "FE-02-foot-placement-v1",
+    "seed": 0,
+    "candidate_count": 10,
+    "xy_scales": [
+      0.8,
+      1.0,
+      1.2
+    ],
+    "target_z_offsets_native": [
+      0.0,
+      0.15,
+      0.3
+    ],
+    "depths_native": [
+      0.001,
+      0.005,
+      0.01,
+      0.02,
+      0.04
+    ],
+    "ik_max_nfev": 80,
+    "ik_regularization": 0.001,
+    "ik_tolerance": 1e-08,
+    "joint_limit_inset_rad": 0.0001,
+    "root_solver_time_limit_s": 2.0,
+    "worker_wall_s": 240.0,
+    "outer_wall_s": 600.0,
+    "memory_mib": 8192,
+    "selection": "root feasible first, then most distinct feet, then shallowest depth",
+    "targets": "neutral terminal tarsus5 body origins; scaled XY around root; min neutral Z plus offset",
+    "full_support": "one selected root-feasible depth per candidate, original solver/force bounds",
+    "dynamic_trials": 0,
+    "biological_validation": false
+  }
+}

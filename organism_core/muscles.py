@@ -18,8 +18,8 @@ class MuscleBank:
         if self.q0.ndim!=1 or not np.isfinite(self.q0).all():raise ValueError('Finite joint coordinates required')
         n=len(self.q0)
         self.activation=np.zeros((n,2));self.rate=np.zeros((n,2));self.pending=np.zeros((n,2))
-        self.pool_sizes=np.ones((n,2)) if pool_sizes is None else np.asarray(pool_sizes,dtype=float)
-        if self.pool_sizes.shape!=(n,2) or (self.pool_sizes<1).any():raise ValueError('Nonempty pool denominators required')
+        self.pool_sizes=np.ones((n,2)) if pool_sizes is None else np.asarray(pool_sizes,dtype=float).copy()
+        if self.pool_sizes.shape!=(n,2) or not np.isfinite(self.pool_sizes).all() or (self.pool_sizes<1).any():raise ValueError('Nonempty pool denominators required')
         self.saturated=np.zeros((n,2),dtype=np.int64)
         self.fiber_force=np.zeros((n,2));self.last_torque=np.zeros(n)
         self.work_native=0.;self.tick=0
@@ -59,10 +59,24 @@ class MuscleBank:
                 for k in ('activation','rate','pending','saturated','fiber_force','last_torque','work_native','tick')}
 
     def restore(self,state):
-        for name,value in state.items():
-            if name not in self.state():raise ValueError('Unknown muscle state')
-            current=getattr(self,name)
+        """Validate the entire snapshot before mutating any live muscle state."""
+        expected=self.state()
+        if not isinstance(state,dict) or set(state)!=set(expected):
+            raise ValueError('Complete muscle state with exact keys required')
+        nonnegative={'activation','rate','pending','saturated','fiber_force'}
+        for name,current in expected.items():
+            value=state[name]
             if isinstance(current,np.ndarray):
-                if not isinstance(value,np.ndarray) or value.shape!=current.shape:raise ValueError('Muscle state shape mismatch')
-                current[:]=value
-            else:setattr(self,name,value)
+                if not isinstance(value,np.ndarray) or value.shape!=current.shape or value.dtype!=current.dtype:
+                    raise ValueError('Muscle state shape/type mismatch: '+name)
+                if not np.isfinite(value).all():raise ValueError('Nonfinite muscle state: '+name)
+                if name in nonnegative and (value<0).any():raise ValueError('Negative muscle state: '+name)
+                if name=='activation' and (value>1).any():raise ValueError('Activation outside [0,1]')
+            elif name=='tick':
+                if isinstance(value,(bool,np.bool_)) or not isinstance(value,(int,np.integer)) or value<0:
+                    raise ValueError('Nonnegative integer muscle tick required')
+            elif isinstance(value,(bool,np.bool_)) or not isinstance(value,(int,float,np.number)) or not np.isrealobj(value) or not np.isfinite(value):
+                raise ValueError('Finite muscle work required')
+        for name,current in expected.items():
+            if isinstance(current,np.ndarray):getattr(self,name)[:]=state[name]
+            else:setattr(self,name,state[name])

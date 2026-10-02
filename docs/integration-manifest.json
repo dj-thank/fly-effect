@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "sources": {
+    "runtime": "993ae7bb838aa4cf613189e1fe671cd86ef376ba",
+    "research": "6e013fb30cb385880b620a7c3317c20b800832fa"
+  },
+  "protected": {
+    "ACCEPTANCE.json": "95fe259b0265e311d73be4cd2e9e6e208f2036993015a50dbc55b01760db7f23",
+    "organism_core/body.py": "f4048dc6407ccb5e1a93718501084469564999a8e93bd7821763c22924092e78",
+    "organism_core/brain.py": "02954162b6af7c01956146632062d11ed3ad9535959b888115cf93125082defd",
+    "organism_core/foot_placement.py": "7d08dd27e38ad0af0c7c4fc71b5209c62b510e75d369942544a51b5c2e4bff8f",
+    "organism_core/graph_lock.json": "eadbd9778adb2b1136e00f9cf07f365cf6a9c7b4c9a8366219c7c9c887be76a9",
+    "organism_core/static_support.py": "e5c9bb91383e50aceb8a67fafb2ba9851c8189849cc7400d482537139d0f7c06"
+  },
+  "retained_runtime": {
+    "docs/RUNTIME_QUALITY.md": "e3cf334e69565157d785a352bf6f8f57136163d394c98faacacec751d6967fc9",
+    "organism_core/checkpoint.py": "219aa982bed41a3487f34fd4ed249109f814813591184b36ef7a911c7d392d74",
+    "organism_core/motor_map.py": "f76d6b58cc7249ad6873f59b76b0b86c82fcc3df4b2f80a24cb222b80f77701b",
+    "scripts/check_experiment.py": "de897f9c759595d64c44e2b44c6de287022727f944fa0b080f848bb602b14bd2",
+    "tests/unit/test_checkpoint_integrity.py": "0d86ddb53221395b07c76aee9119e991d5cdca0895ed1cb79c785e3d2e9c7938",
+    "tests/unit/test_checkpoint_preflight.py": "72ad34c8913ea960b70669dd26d9c36d0d7a4ab1574133a47dd9a49e15e43c94",
+    "tests/unit/test_experiment_contract.py": "1efbda4e1398cb98b2de77ccbf3a2c398157dfd93e78209e6dce63a453c09a86",
+    "tests/unit/test_motor_dispatch.py": "752d001a0bd228ec97cb45ad88d712ddc665c3ac36829009277dc22e308d1db8"
+  },
+  "retained_research": {
+    ".github/workflows/foot-placement.yml": "63887d6c50d07833c57b92c3899a60c45b0bb131ae8891851e4b9495d6747fd5",
+    ".github/workflows/root-ab.yml": "d873779fc6e1287e19fa9cefe4cee4943828438e0d1f62a1a006018f63d06aec",
+    "docs/PASSIVE_CONFLICT.md": "1a508459550537919610789aba0f7c1106fcf26f80c2b767adc80f260923958c",
+    "organism_core/support_conflict.py": "ffc740612fac8f94a38531d69e27e3d4cc891b51f883855f5a45f31c4022add9",
+    "tests/unit/test_support_conflict.py": "eb1898cf4a9544a493061db98bb4d7daf7a869c2b61bd2ef5eb1e1977b062a57"
+  },
+  "scope": "Reviewed combined snapshot only. This is not a biological acceptance file or tamper-proof signature."
+}

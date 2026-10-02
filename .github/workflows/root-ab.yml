@@ -1,0 +1,51 @@
+name: FE-02 root A-B comparison
+on:
+  pull_request:
+    paths:
+      - 'organism_core/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'transfer*_tendons.py'
+      - 'audit_source_tendons.py'
+      - 'pyproject.toml'
+      - '.github/workflows/root-ab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: root-ab-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  paired-mechanics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e ".[body,mechanics]"
+      - name: Root-only derivation and matched controls under enforced budgets
+        run: python scripts/run_root_ab_study.py --workspace work/root-ab
+      - name: Retain paired evidence and failures, excluding meshes and XML assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe02-root-ab-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            work/root-ab/*.json
+            work/root-ab/*.log
+            work/root-ab/legacy_anchored/*.json
+            work/root-ab/legacy_anchored/*.npz
+            work/root-ab/unanchored_root_candidate/*.json
+            work/root-ab/unanchored_root_candidate/*.npz
+            work/root-ab/source-study/*.json
+            work/root-ab/source-study/*.npz
+            work/root-ab/runs/source-tendon-audit/results.json
+            work/root-ab/runs/six-leg-tendon-candidate/results.json
