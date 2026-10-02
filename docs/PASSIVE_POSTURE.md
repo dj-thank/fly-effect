@@ -371,32 +371,89 @@ under live contacts over 66 joints plus three bounded root-tilt axes.
 
 ### Local execution, 2026-09-15 JST
 
-Four seeds, ~16k probes, ~160k solver calls: outcome
-`descent_floored_without_feasibility`, verified `evidence_valid: true`
-with all replays decided. The full residual descends far more than the
+Four seeds, ~16k probes, ~160k solver calls: the retained schema-1 run and
+verification receipts recorded `descent_floored_without_feasibility` with
+`evidence_valid: true` and all replays decided. These historical receipts
+remain unchanged. Under the new classifier this budget-stopped record has
+`scientific_outcome: inconclusive`, a **corrected classification** relative
+to its historical `recorded_outcome`. Replay of the archived LP evidence
+with the new verifier is pending; this change does not claim a new
+verification of that historical run.
+The full residual descends far more than the
 subsystem residual ever did — candidate 1 fell from 0.233 to **0.148**
 (281 accepted moves, 34 of them root-tilt moves; tilting reduces the
 full residual even though it never helped the subsystem), candidate 2
 reached ~0.18. All seeds were still slowly improving when the declared
-probe budget ran out (`eval_budget_exhausted`, not a hard floor), so the
-true coordinate-descent floor lies lower — but the best-found residual
-is ~0.15, five orders of magnitude above the 1e-6 support tolerance.
+probe budget ran out (`eval_budget_exhausted`, not a hard floor). The
+coordinate-descent floor and amount of further improvement remain unknown; the
+best-found residual is ~0.15, five orders of magnitude above the 1e-6
+support tolerance.
 
-Interpretation: the model cannot reach even tolerance-level static
-support anywhere in the bounded search space — the best force
-assignment leaves a ~15% normalized balance error. The deficit is real
-and large, not a solver-contract artifact: the subsystem rows can be
-balanced to 3e-7, but closing all 72 rows within declared tension bounds
-is a different, unsolved problem at every pose found.
+Interpretation: this run found no exact or tolerance-level static-support
+witness; the best force assignment found leaves a ~15% normalized balance
+error. Budget exhaustion does not establish a local floor or infeasibility
+elsewhere in the bounded search space. The subsystem rows can be balanced
+to 3e-7, but closing all 72 rows within declared tension bounds remains
+unsolved at the poses evaluated.
+
+## Bounded global posture sampling (FE-02-global-sample-v1)
+
+All descents explored the seed basin found by the structured pipeline —
+could other basins yield lower full-system residuals? `organism_core/global_sample.py`
+draws 512 declared-random poses (hinges uniform inside their limits,
+root tilt uniform-axis/uniform-angle within 0.6 rad of neutral),
+evaluates the full-support residual under live contacts, descends the
+best eight eligible samples, and certifies through the unchanged chain.
+
+### Local execution, 2026-09-15 JST
+
+512/512 evaluated, 443 formed valid foot contacts — and **every eligible
+sample scored R = 1.0**, the saturated ceiling of the scaled residual
+(the sampled poses leave passive-row demand above the declared contact
+and tension capacity). The eight descended samples accepted zero
+moves; certifications stopped at gate 1. Verified `evidence_valid:
+true`, outcome `no_global_improvement`. These 512-sample/eight-descent
+counts describe the historical run. The new synthetic regression that
+skips eight required descents is a separate test, not a changed historical
+observation.
+
+Interpretation: the pipeline-discovered basin (~0.148) has a lower residual
+than these declared-random samples. This finite run found neither a better
+basin nor an exact or tolerance-level static-support witness. It does not
+cover the continuous posture space or establish global static-support
+infeasibility; other poses or search methods remain untested.
+
+## Outcome re-verification receipts (v2)
+
+Outcome re-verification appends a fresh
+`verification-outcomes-v2-{timestamp}-{uuid}.json` receipt without replacing
+the historical `verification.json`, `result.json`, `observations.npz` or
+`protocol.json`. Each new receipt records the SHA-256 of the latter three
+source files and `verification_method: saved_input_lp_replay`. The schema
+remains 1; PROTOCOL values/hash, physical model, budgets and thresholds are
+unchanged.
+
+A new global-sampling run uses the newest full-descent v2 receipt, binds
+that exact receipt in its `input_sha256`, and requires the receipt's three
+source hashes to match the current files. If the newest receipt fails or
+does not match, it does not fall back to an older successful receipt. The
+retained schema-1 field `baseline_floor` denotes the best observed terminal
+residual used as the comparison baseline; its historical name is not a
+proof of a coordinate-descent floor.
 
 ## Interpretation limits
 
 A `full_support_feasible_posture_found` outcome means only that a diagnostic
 initial placement admits a static force witness under declared approximations.
 It is not stable standing, not a movement, and would justify a **separate**
-bounded dynamic-hold experiment. A bounded negative result covers only this
-declared search space — single-DOF sweeps plus eight seeded samples — not all
-postures or the organism goal.
+bounded dynamic-hold experiment. A verified positive witness may retain its
+positive classification even when another trial stops at a budget limit;
+budget exhaustion alone cannot support a negative floor or impossibility
+classification. Historical schema-1 receipts retain their `recorded_outcome`
+when re-verification reports a corrected `scientific_outcome`; neither the
+physical model, search budgets nor thresholds change. A bounded negative
+result covers only the completed declared trials, not all postures or the
+organism goal.
 
 ## Reproduction
 
