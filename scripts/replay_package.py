@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 from pathlib import Path, PurePosixPath
 
@@ -42,6 +43,144 @@ SECRET = re.compile(
     r"(?i)(?:ghp_[a-z0-9]{20,}|github_pat_[a-z0-9_]{20,}|"
     r"sk-(?:proj-)?[a-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY)"
 )
+SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+REPLAY_SERIES = ("time_s", "contacts", "muscle_force", "cum_spikes", "cum_sensory", "root_xyz")
+FEET = {"lf", "lm", "lh", "rf", "rm", "rh"}
+
+
+def _json_object(text: str, label: str, failures: list[str]) -> dict | None:
+    try:
+        value = json.loads(text)
+    except (ValueError, RecursionError) as exc:
+        failures.append(f"invalid {label}: {exc}")
+        return None
+    if not isinstance(value, dict):
+        failures.append(f"{label} must be a JSON object")
+        return None
+    return value
+
+
+def _json_assignment(text: str, name: str, failures: list[str]) -> dict | None:
+    matches = list(re.finditer(rf"window\.{re.escape(name)}\s*=\s*", text))
+    if len(matches) != 1:
+        failures.append(f"replay-data.js must contain exactly one JSON {name} assignment")
+        return None
+    payload = text[matches[0].end():]
+    try:
+        value, end = json.JSONDecoder().raw_decode(payload)
+    except (ValueError, RecursionError) as exc:
+        failures.append(f"invalid {name} JSON: {exc}")
+        return None
+    if not payload[end:].lstrip().startswith(";"):
+        failures.append(f"{name} must be a JSON literal terminated by a semicolon")
+        return None
+    if not isinstance(value, dict):
+        failures.append(f"{name} must be a JSON object")
+        return None
+    return value
+
+
+def _finite_number(value: object) -> bool:
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def _nonnegative_int(value: object) -> bool:
+    # The browser stores these counts as JavaScript numbers.
+    return type(value) is int and 0 <= value <= 2**53 - 1
+
+
+def _verify_replay_data(data: dict, video_hash: str | None, failures: list[str]) -> None:
+    meta = data.get("meta")
+    if not isinstance(meta, dict):
+        failures.append("REPLAY_DATA.meta must be an object")
+        return
+    frames, fps, duration = meta.get("frames"), meta.get("fps"), meta.get("duration_s")
+    valid_frames = _nonnegative_int(frames) and frames > 0
+    valid_clock = _finite_number(fps) and fps > 0 and _finite_number(duration) and duration > 0
+    if not valid_frames:
+        failures.append("REPLAY_DATA.meta.frames must be a positive integer")
+    if not valid_clock:
+        failures.append("REPLAY_DATA.meta.fps and duration_s must be finite positive numbers")
+    if valid_frames and valid_clock and not math.isclose(
+        duration, frames / fps, rel_tol=0, abs_tol=0.5 / fps + 1e-9
+    ):
+        failures.append("REPLAY_DATA frame count, fps and duration_s are inconsistent")
+    feet = meta.get("feet")
+    if (
+        not isinstance(feet, list)
+        or len(feet) != len(FEET)
+        or any(not isinstance(foot, str) for foot in feet)
+        or set(feet) != FEET
+    ):
+        failures.append("REPLAY_DATA.meta.feet must name each of the six feet once")
+    for key in ("source_sha256", "video_sha256"):
+        digest = meta.get(key)
+        if not isinstance(digest, str) or not SHA256.fullmatch(digest):
+            failures.append(f"REPLAY_DATA.meta.{key} must be a SHA-256 digest")
+    if video_hash is not None and meta.get("video_sha256") != video_hash:
+        failures.append("REPLAY_DATA video_sha256 does not match assets/actual-motion.mp4")
+    for key in ("pose_interpolation", "walking_passed"):
+        if meta.get(key) is not False:
+            failures.append(f"REPLAY_DATA.meta.{key} must be false for this recorded package")
+    if not isinstance(meta.get("force_units"), str) or not meta["force_units"].strip():
+        failures.append("REPLAY_DATA.meta.force_units must disclose the force units")
+    if not valid_frames:
+        return
+    series = {}
+    for key in REPLAY_SERIES:
+        values = data.get(key)
+        if not isinstance(values, list) or len(values) != frames:
+            failures.append(f"REPLAY_DATA.{key} must contain meta.frames values")
+        else:
+            series[key] = values
+    times = series.get("time_s")
+    if times is not None:
+        if not all(_finite_number(value) for value in times):
+            failures.append("REPLAY_DATA.time_s must contain finite numbers")
+        elif valid_clock:
+            if any(value < 0 or value > duration for value in times) or any(
+                b <= a for a, b in zip(times, times[1:])
+            ):
+                failures.append("REPLAY_DATA.time_s must increase strictly within the run duration")
+            # Recorded source poses may differ slightly from nominal video time.
+            # Their timestamps must still fall within one corresponding video frame.
+            if any(abs(value - index / fps) >= 1 / fps + 1e-9 for index, value in enumerate(times)):
+                failures.append("REPLAY_DATA.time_s is not synchronized with the video frames")
+    contacts = series.get("contacts")
+    if contacts is not None and any(
+        not isinstance(row, list)
+        or len(row) != len(FEET)
+        or any(type(value) is not int or value not in (0, 1) for value in row)
+        for row in contacts
+    ):
+        failures.append("REPLAY_DATA.contacts must contain six binary integers per frame")
+    positions = series.get("root_xyz")
+    if positions is not None and any(
+        not isinstance(row, list)
+        or len(row) != 3
+        or not all(_finite_number(value) for value in row)
+        for row in positions
+    ):
+        failures.append("REPLAY_DATA.root_xyz must contain three finite coordinates per frame")
+    force = series.get("muscle_force")
+    if force is not None and not all(_finite_number(value) and value >= 0 for value in force):
+        failures.append("REPLAY_DATA.muscle_force must contain finite nonnegative numbers")
+    for key, total_key in (("cum_spikes", "total_spikes"), ("cum_sensory", "total_sensory")):
+        total, values = meta.get(total_key), series.get(key)
+        if not _nonnegative_int(total):
+            failures.append(f"REPLAY_DATA.meta.{total_key} must be a nonnegative integer")
+        if values is not None:
+            if not all(_nonnegative_int(value) for value in values):
+                failures.append(f"REPLAY_DATA.{key} must contain nonnegative integers")
+            elif any(b < a for a, b in zip(values, values[1:])) or (
+                _nonnegative_int(total) and any(value > total for value in values)
+            ):
+                failures.append(f"REPLAY_DATA.{key} must be nondecreasing and not exceed {total_key}")
 
 
 def sha256(path: Path) -> str:
@@ -137,6 +276,7 @@ def verify_package(root: Path) -> list[str]:
     if missing:
         failures.append(f"missing package files: {missing}")
 
+    texts: dict[str, str] = {}
     for relative, path in files.items():
         if path.suffix.lower() in FORBIDDEN_SUFFIXES or path.name.lower() in {
             "observation.npz",
@@ -149,6 +289,10 @@ def verify_package(root: Path) -> list[str]:
             except UnicodeDecodeError:
                 failures.append(f"non-UTF-8 text file: {relative}")
                 continue
+            except OSError as exc:
+                failures.append(f"unreadable text file: {relative}: {exc}")
+                continue
+            texts[relative] = text
             if LOCAL_PATH.search(text):
                 failures.append(f"absolute local path in {relative}")
             if SECRET.search(text):
@@ -159,14 +303,18 @@ def verify_package(root: Path) -> list[str]:
         failures.append(f"missing {MANIFEST_NAME}")
         return failures
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        manifest_text = manifest_path.read_text(encoding="utf-8-sig")
+    except (UnicodeDecodeError, OSError) as exc:
         failures.append(f"invalid {MANIFEST_NAME}: {exc}")
+        return failures
+    manifest = _json_object(manifest_text, MANIFEST_NAME, failures)
+    if manifest is None:
         return failures
 
     if manifest.get("schema") != 2:
         failures.append("manifest schema must be 2")
-    if manifest.get("publication_gate") not in PUBLICATION_GATES:
+    gate = manifest.get("publication_gate")
+    if not isinstance(gate, str) or gate not in PUBLICATION_GATES:
         failures.append("publication gate is not a recognized explicit owner decision")
     if manifest.get("license_integration_status") != "COMPLETE_FOR_REVIEW":
         failures.append("license integration is not marked complete for review")
@@ -202,7 +350,9 @@ def verify_package(root: Path) -> list[str]:
         if entry.get("bytes") != path.stat().st_size:
             failures.append(f"size mismatch: {relative}")
 
-    notice = (root / "NOTICE.txt").read_text(encoding="utf-8") if (root / "NOTICE.txt").is_file() else ""
+    if "SOURCE_ATTRIBUTIONS.json" in texts:
+        _json_object(texts["SOURCE_ATTRIBUTIONS.json"], "SOURCE_ATTRIBUTIONS.json", failures)
+    notice = texts.get("NOTICE.txt", "")
     for phrase in (
         "FlyGym 2.1.0",
         "Copyright 2023-2026 The NeuroMechFly v2 Authors",
@@ -224,34 +374,33 @@ def verify_package(root: Path) -> list[str]:
         "LICENSES/CC-BY-4.0.url.txt",
     )
     for page_name in ("index.html", "replay.html"):
-        page = (root / page_name).read_text(encoding="utf-8") if (root / page_name).is_file() else ""
+        page = texts.get(page_name, "")
         for target in required_links:
             if target not in page:
                 failures.append(f"{page_name} does not link {target}")
         if "シミュレーション記録" not in page or "未較正" not in page:
             failures.append(f"{page_name} does not visibly label simulated/uncalibrated status")
 
-    data_path = root / "assets" / "replay-data.js"
-    data_text = data_path.read_text(encoding="utf-8") if data_path.is_file() else ""
-    match = re.search(r"window\.REPLAY_PROVENANCE = (\{.*?\});", data_text, re.DOTALL)
-    if not match:
-        failures.append("replay-data.js lacks machine-readable replay provenance")
-    else:
-        try:
-            provenance = json.loads(match.group(1))
-        except json.JSONDecodeError as exc:
-            failures.append(f"invalid replay provenance JSON: {exc}")
-        else:
-            expected = {
-                "recording_kind": "simulated_recorded_run",
-                "calibration_status": "uncalibrated",
-                "source_recording_included": False,
-                "raw_inputs_included": False,
-                "changes_made": True,
-            }
-            for key, value in expected.items():
-                if provenance.get(key) != value:
-                    failures.append(f"replay provenance {key} must be {value!r}")
+    data_text = texts.get("assets/replay-data.js", "")
+    provenance = _json_assignment(data_text, "REPLAY_PROVENANCE", failures)
+    if provenance is not None:
+        expected = {
+            "recording_kind": "simulated_recorded_run",
+            "calibration_status": "uncalibrated",
+            "source_recording_included": False,
+            "raw_inputs_included": False,
+            "changes_made": True,
+        }
+        for key, value in expected.items():
+            actual = provenance.get(key)
+            if actual != value or type(actual) is not type(value):
+                failures.append(f"replay provenance {key} must be {value!r}")
+        if "publication_gate" in provenance and provenance["publication_gate"] != manifest.get("publication_gate"):
+            failures.append("replay provenance publication_gate must match the manifest")
+    data = _json_assignment(data_text, "REPLAY_DATA", failures)
+    if data is not None:
+        video = files.get("assets/actual-motion.mp4")
+        _verify_replay_data(data, sha256(video) if video is not None else None, failures)
 
     return failures
 

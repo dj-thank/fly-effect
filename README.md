@@ -40,6 +40,19 @@ With Python 3.11 or later, run these commands from the repository:
 
 The synthetic demo checks installation and checkpoint replay; it is not evidence of biological performance. Biological datasets, meshes, and trained weights are not bundled. Full-CNS and body experiments require additional data and preparation. See [setup](docs/GETTING_STARTED.md) and [data requirements](docs/DATA.md).
 
+To check the included [recorded simulation replay](examples/hae-recorded-replay/README.md):
+
+    python scripts/replay_package.py verify examples/hae-recorded-replay
+
+This check verifies the package inventory and hashes, the simulation provenance,
+and the replay's frame counts, six-foot contacts, coordinates, cumulative event
+counts, force units, and finite values. Recorded timestamps must increase within
+the run duration and stay within one frame period of the corresponding video
+time. The data's video hash must match the included MP4. These are integrity
+checks; they do not establish biological calibration or walking performance.
+The excluded source recording's hash is checked for format only, and the verifier
+does not decode the media to independently measure its duration or frame count.
+
 ## Our principles
 
 - **Test small hypotheses first.** Use small circuits, muscles, and body experiments before expensive simulations.
