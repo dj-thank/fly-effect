@@ -29,6 +29,10 @@ from .passive_posture import FIELDS, INFEASIBLE, FEASIBLE_POSE
 from .passive_margin import margin_solve, passive_rows
 from .residual_descent import _certify
 from .root_descent import _tilt, ROT_AXES
+from .search_outcomes import full_descent_outcome
+from .verification_receipt import (
+    input_hashes_unchanged, outcome_source_hashes, write_outcome_receipt,
+)
 
 LEGS = ('lf', 'lm', 'lh', 'rf', 'rm', 'rh')
 PROTOCOL = {
@@ -290,7 +294,8 @@ def run(workspace):
         record_inputs = {p.relative_to(workspace).as_posix(): file_hash(p)
                          for p in inputs}
         code = {name: file_hash(Path(__file__).with_name(name)) for name in
-                ('full_descent.py', 'root_descent.py', 'contact_descent.py',
+                ('full_descent.py', 'search_outcomes.py', 'verification_receipt.py',
+                 'root_descent.py', 'contact_descent.py',
                  'residual_descent.py', 'iterative_shift.py',
                  'passive_margin.py', 'passive_posture.py',
                  'static_support.py', 'foot_placement.py',
@@ -419,6 +424,10 @@ def run(workspace):
                           key=lambda a: abs(a['R']-half),
                           default={'accepted': n_acc})['accepted']
                 cert_keys.add(mid)
+            # Link completed descent evidence before another certification can
+            # time out, so earlier completed witnesses remain attributable.
+            srec['status'] = 'completed'
+            result['seeds'].append(srec)
             for ci, ak in enumerate(sorted(cert_keys, reverse=True)[
                     :PROTOCOL['certified_poses_per_seed']]):
                 if (time.monotonic() >= seed_deadline or srec['solver_calls']
@@ -428,61 +437,47 @@ def run(workspace):
                     continue
                 q_cert = acc_arrays[f'acc_{ak:04d}_qpos']
                 cp = dp+f'cert_{ci:02d}_'
+                pending = {'accepted_index': ak, 'status': 'pending'}
+                srec['certifications'].append(pending)
                 crec, c_arrays = _certify(
                     body, transmission, q_cert, fmax, l0, passive, padrs,
                     pstiff, pranges, seed_deadline, cp)
                 crec['accepted_index'] = int(ak)
                 crec['status'] = 'completed'
                 arrays.update(c_arrays)
-                srec['certifications'].append(crec)
+                pending.update(crec)
                 srec['solver_calls'] += crec['solver_calls']
-            srec['status'] = 'completed'
-            result['seeds'].append(srec)
         after = {p.relative_to(workspace).as_posix(): file_hash(p)
                  for p in inputs}
         if after != result['input_sha256']:
             raise ValueError('Input evidence changed during the descent run')
         completed = [s for s in result['seeds']
                      if s.get('status') == 'completed']
-        truncated = (len(completed) < len(seeds)
-                     or any(s.get('remaining_seeds_unexecuted')
-                            for s in result['seeds'])
-                     or any(c.get('status') != 'completed'
-                            for s in completed for c in s['certifications']))
         certs = [c for s in completed for c in s['certifications']
                  if c.get('status') == 'completed']
-        any_full = any(c.get('any_full_feasible') for c in certs)
-        any_sub = any(c.get('any_passive_feasible') for c in certs)
         tol = PROTOCOL['support_residual_tolerance']
         tol_witness = any(
             a['R'] is not None and a['R'] <= tol
             for s in completed for a in s['descent']['accepted'])
-        undecided = any(
-            any(s.get('passive_subsystem', {}).get('status') not in
-                ('feasible', INFEASIBLE)
-                or s.get('support', {}).get('status') not in
-                (FEASIBLE_POSE, INFEASIBLE)
-                or s.get('margin', {}).get('status') not in
-                ('measured', 'unreachable_at_any_shift')
-                for s in c['samples'] if s.get('evidence_saved'))
-            for c in certs)
         result.update(status='completed',
                       seeds_executed=len(completed),
                       certifications_executed=len(certs),
                       descent_calls=sum(s['solver_calls'] for s in completed),
                       tolerance_witness=tol_witness)
-        if truncated or undecided:
-            result['scientific_outcome'] = 'inconclusive'
-        elif any_full:
-            result['scientific_outcome'] = 'found_full_support_pose'
-        elif any_sub:
-            result['scientific_outcome'] = 'found_subsystem_feasible_pose'
-        elif tol_witness:
-            result['scientific_outcome'] = 'tolerance_support_witness'
-        else:
-            result['scientific_outcome'] = 'descent_floored_without_feasibility'
+        classification = full_descent_outcome(result, PROTOCOL)
+        if classification['errors']:
+            raise ValueError('; '.join(classification['errors']))
+        result.update({k: v for k, v in classification.items() if k != 'errors'})
     except TimeoutError:
-        result.update(status='timeout', scientific_outcome='invalid_experiment')
+        # A timeout says nothing about existence. Preserve only completed
+        # witnesses whose input receipts remained unchanged before the stop.
+        if input_hashes_unchanged(workspace, result.get('input_sha256')):
+            result['status'] = 'timeout'
+            classification = full_descent_outcome(result, PROTOCOL)
+            result.update({k: v for k, v in classification.items() if k != 'errors'})
+        else:
+            result.update(status='error', scientific_outcome='invalid_experiment',
+                          error='Input evidence changed during the descent run')
     except Exception as exc:
         result.update(status='error', scientific_outcome='invalid_experiment',
                       error=f'{type(exc).__name__}: {exc}')
@@ -492,7 +487,7 @@ def run(workspace):
     return result
 
 
-def _check_descent_replay(si, srec, arrays):
+def _check_descent_replay(si, srec, arrays, *, replayed_residuals=None):
     """Replay every saved accepted-step full-support LP."""
     from .static_support import solve_support
     errs = []
@@ -515,6 +510,8 @@ def _check_descent_replay(si, srec, arrays):
                             arrays[sp+'support_limits'],
                             arrays[sp+'support_friction'])
         R_replay, st = _full_residual(sup)
+        if replayed_residuals is not None:
+            replayed_residuals[ak] = R_replay
         if st not in ('feasible', 'infeasible', 'residual_check_failed'):
             undecided = True
         if a['R'] is None:
@@ -525,7 +522,7 @@ def _check_descent_replay(si, srec, arrays):
         if abs(R_replay-a['R']) > PROTOCOL['replay_tolerance']*max(1., abs(a['R'])):
             errs.append(f'accepted step {ak} replay R differs')
     last_key = descent['accepted_steps']
-    if f'acc_{last_key:04d}_qpos' in arrays:
+    if dp+f'acc_{last_key:04d}_qpos' in arrays:
         q_term = arrays[dp+f'acc_{last_key:04d}_qpos']
         if not np.allclose(q_term, descent['terminal_qpos'], rtol=0, atol=1e-12):
             errs.append('terminal qpos does not match the last accepted step')
@@ -547,7 +544,7 @@ def _check_descent_replay(si, srec, arrays):
 def verify(workspace):
     """Replay the full-descent trajectory and every certification LP."""
     from .passive_posture import solve_subsystem
-    from .root_ab import file_hash, write_json
+    from .root_ab import file_hash
     from .root_ab_evidence import read_json
     from .static_support import solve_support
     workspace = Path(workspace).resolve()
@@ -558,9 +555,10 @@ def verify(workspace):
     def fail(msg):
         verdict['errors'].append(msg)
         verdict['status'] = 'failed'
-        write_json(d/'verification.json', verdict)
-        return verdict
+        return write_outcome_receipt(d, verdict)
     try:
+        source_hashes = outcome_source_hashes(d)
+        verdict['source_sha256'] = source_hashes
         result = read_json(d/'result.json')
         proto = read_json(d/'protocol.json')
         if result.get('protocol_sha256') != protocol_hash():
@@ -589,11 +587,13 @@ def verify(workspace):
                          allow_pickle=False) as z:
                 passive = [int(i) for i in z[pp+'passive_dofs']]
             rows = list(range(6))+passive
-            und, errs = _check_descent_replay(si, srec, arrays)
+            replayed_residuals = {}
+            und, errs = _check_descent_replay(
+                si, srec, arrays, replayed_residuals=replayed_residuals)
             undecided = undecided or und
             n_traj += len(srec['descent']['accepted'])
-            for a in srec['descent']['accepted']:
-                if a['R'] is not None and a['R'] <= tol:
+            for residual in replayed_residuals.values():
+                if np.isfinite(residual) and 0 <= residual <= tol:
                     tol_witness = True
             for e in errs:
                 verdict['errors'].append(f'seed {si}: {e}')
@@ -649,42 +649,30 @@ def verify(workspace):
             verdict['errors'].append(
                 f'saved witnesses not linked to a recorded sample: '
                 f'{sorted(extra)[:4]}')
-        if verdict['errors']:
-            return fail('Evidence validation: '+'; '.join(verdict['errors'][:8]))
         completed = [s for s in result['seeds']
                      if s.get('status') == 'completed']
-        truncated = (len(completed) < result.get('declared_seeds', 0)
-                     or any(s.get('remaining_seeds_unexecuted')
-                            for s in result['seeds'])
-                     or any(c.get('status') != 'completed'
-                            for s in completed for c in s['certifications']))
-        certs = [c for s in completed for c in s['certifications']
-                 if c.get('status') == 'completed']
-        any_full = any(c.get('any_full_feasible') for c in certs)
-        any_sub = any(c.get('any_passive_feasible') for c in certs)
-        if truncated or undecided:
-            replayed = 'inconclusive'
-        elif any_full:
-            replayed = 'found_full_support_pose'
-        elif any_sub:
-            replayed = 'found_subsystem_feasible_pose'
-        elif tol_witness:
-            replayed = 'tolerance_support_witness'
-        else:
-            replayed = 'descent_floored_without_feasibility'
+        classification = full_descent_outcome(
+            result, PROTOCOL, replay_undecided=undecided,
+            tolerance_witness=tol_witness)
+        verdict['errors'].extend(classification['errors'])
+        if verdict['errors']:
+            return fail('Evidence validation: '+'; '.join(verdict['errors'][:8]))
+        if outcome_source_hashes(d) != source_hashes:
+            return fail('Source evidence changed during outcome re-verification')
         verdict.update(status='completed', evidence_valid=True,
-                       scientific_outcome=replayed,
+                       scientific_outcome=classification['scientific_outcome'],
+                       outcome_classification=classification['outcome_classification'],
                        recorded_outcome=result.get('scientific_outcome'),
+                       outcome_reclassified=(classification['scientific_outcome']
+                                             != result.get('scientific_outcome')),
                        trajectory_steps_replayed=n_traj,
                        witnesses_checked=n_wit,
                        seeds_checked=len(completed))
-        write_json(d/'verification.json', verdict)
-        return verdict
+        return write_outcome_receipt(d, verdict)
     except Exception as exc:
         verdict['errors'].append(f'{type(exc).__name__}: {exc}')
         verdict['status'] = 'error'
-        write_json(d/'verification.json', verdict)
-        return verdict
+        return write_outcome_receipt(d, verdict)
 
 
 def main(argv=None):
@@ -695,7 +683,7 @@ def main(argv=None):
     out = verify(args.workspace) if args.verify else run(args.workspace)
     print(json.dumps({k: out.get(k) for k in
                       ('status', 'scientific_outcome', 'evidence_valid',
-                       'errors')}, indent=2, default=str))
+                       'errors', 'verification_receipt')}, indent=2, default=str))
 
 
 if __name__ == '__main__':
