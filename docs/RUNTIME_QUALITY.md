@@ -2,14 +2,25 @@
 
 ## Scope
 
-Software-only change based on main `89d59fc56c3e4f3b0f9a26725ce4ee55fdf1ee36`.
+The initial software-only change was based on main `89d59fc56c3e4f3b0f9a26725ce4ee55fdf1ee36`.
 It does not change neural IDs/edges/weights, model parameters, force limits,
 `ACCEPTANCE.json`, graph lock, source assets, or the body research protocol.
 Code identity naturally changes; do not relabel an incompatible checkpoint.
 
+The runtime, allocation-preflight, graph-identity, and replay-distribution fixes
+are integrated into main at `94753136e4250757922168e0ef608e81e7c38707`.
+Its source tree matches the combined source that passed 235 local tests and the
+four-environment CI on the final PR head. See [current validation](STATUS.md).
+The benchmark and initial verification below retain their original scope and date;
+they are not new full-CNS measurements from the integration.
+
 ## Checkpoints
 
-Valid schema-1 archives remain readable. Dictionary-key duplication, duplicate
+Valid schema-1 archives remain readable by the codec with a matching identity.
+The engine additionally binds checkpoints to the complete verified graph lock,
+including IDs, signs, motor membership and annotations. Old engine identities are
+not rewritten or upgraded; use their original code and data. See [data identity](DATA.md).
+Dictionary-key duplication, duplicate
 ZIP/JSON members, unsupported nodes, malformed scalars, reused/missing array
 references, orphan arrays and nonfinite JSON constants now fail explicitly.
 A save failure during serialization, flushing or replacement leaves the earlier
@@ -17,6 +28,11 @@ checkpoint intact and removes the temporary file. Hashing happens on the complet
 temporary file before atomic replacement. Loading verifies and reads one open file,
 not two independently opened pathnames. `fsync` flushes file contents; directory
 crash durability and hostile-archive resource isolation are not claimed.
+
+NPY headers and payload lengths are checked before allocating arrays. JSON number
+overflow is rejected. Callers may cap the total uncompressed state size with
+`max_uncompressed_bytes`; its default remains unlimited, while metadata defaults
+to 16 MiB. These bounds are not an operating-system memory or time sandbox.
 
 ## Motor dispatch
 
@@ -54,8 +70,10 @@ push+PR matrices on open branches. Draft PRs are checked; unpublished branches
 without a PR no longer trigger this workflow. Cache pip downloads keyed by
 `pyproject.toml`, cancel superseded runs, cap each job at 15 minutes, and retain
 JUnit plus one distribution archive. No paid service or recurring schedule is added.
+The integrated workflow also validates the example experiment and the replay
+inside the built source distribution.
 
-## Local verification before submission
+## Historical local verification before the original submission
 
 41 added tests passed. The broader PR #17 source snapshot with these changes gave
 224 passed and eight backend-dependent modules skipped; no local MuJoCo, FlyGym
