@@ -28,6 +28,13 @@ from .passive_posture import FIELDS, solve_subsystem, INFEASIBLE, FEASIBLE_POSE
 from .passive_margin import margin_solve, passive_rows
 from .residual_descent import _certify
 from .full_descent import _probe_full, _descend_full, _full_residual
+from .search_outcomes import (
+    full_descent_baseline, global_sample_outcome, observed_terminal_residual,
+)
+from .verification_receipt import (
+    input_hashes_unchanged, latest_outcome_receipt, outcome_source_hashes,
+    validate_outcome_sources, write_outcome_receipt,
+)
 
 LEGS = ('lf', 'lm', 'lh', 'rf', 'rm', 'rh')
 PROTOCOL = {
@@ -125,13 +132,13 @@ def run(workspace):
                        /'examples/fe02-global-sample.json')
         if read_json(record_path)['parameters'] != PROTOCOL:
             raise ValueError('Versioned record differs from implemented protocol')
-        full_verdict = read_json(full_dir/'verification.json')
-        if full_verdict.get('evidence_valid') is not True:
-            raise ValueError('Full-descent evidence was not verified')
+        full_receipt = latest_outcome_receipt(full_dir)
+        full_verdict = read_json(full_receipt)
+        validate_outcome_sources(full_dir, full_verdict)
         full_result = read_json(full_dir/'result.json')
-        seed_floor = min(
-            s['descent']['final_R'] for s in full_result['seeds']
-            if s.get('descent', {}).get('final_R') is not None)
+        # Keep the schema-1 baseline_floor field; its value is an observed
+        # terminal residual even when a budget stop leaves the floor unknown.
+        seed_floor = full_descent_baseline(full_result, full_verdict)
         inputs = [placed_dir/'result.json', placed_dir/'observations.npz',
                   placed_dir/'model-receipt.json', workspace/'protocol.json',
                   source_dir/'result.json', source_dir/'observations.npz',
@@ -139,11 +146,12 @@ def run(workspace):
                   shift_dir/'result.json', shift_dir/'observations.npz',
                   shift_dir/'verification.json',
                   full_dir/'result.json', full_dir/'observations.npz',
-                  full_dir/'verification.json']
+                  full_receipt]
         record_inputs = {p.relative_to(workspace).as_posix(): file_hash(p)
                          for p in inputs}
         code = {name: file_hash(Path(__file__).with_name(name)) for name in
-                ('global_sample.py', 'full_descent.py', 'root_descent.py',
+                ('global_sample.py', 'search_outcomes.py', 'verification_receipt.py',
+                 'full_descent.py', 'root_descent.py',
                  'contact_descent.py', 'residual_descent.py',
                  'iterative_shift.py', 'passive_margin.py',
                  'passive_posture.py', 'static_support.py',
@@ -270,6 +278,12 @@ def run(workspace):
                           default={'accepted': n_acc})['accepted']
                 cert_keys.add(mid)
             certs = []
+            drec_out = {k: v for k, v in drec.items()
+                        if k not in ('solver_calls', 'probes')}
+            drec_out['certifications'] = certs
+            result['samples'][samp['i']]['descent'] = drec_out
+            result['samples'][samp['i']]['descended'] = True
+            result['samples'][samp['i']]['descent_ordinal'] = si
             for ci, ak in enumerate(sorted(cert_keys, reverse=True)[
                     :PROTOCOL['certified_poses_per_sample']]):
                 if time.monotonic() >= deadline or budget[0] <= 0:
@@ -286,6 +300,8 @@ def run(workspace):
                 pranges = model.jnt_range[joint_ids]
                 pstiff = model.jnt_stiffness[joint_ids]
                 cp = dp+f'cert_{ci:02d}_'
+                pending = {'accepted_index': ak, 'status': 'pending'}
+                certs.append(pending)
                 crec, c_arrays = _certify(
                     body, transmission, q_cert, fmax, l0, passive, padrs,
                     pstiff, pranges, deadline, cp)
@@ -293,72 +309,43 @@ def run(workspace):
                 crec['status'] = 'completed'
                 arrays.update(c_arrays)
                 budget[0] -= crec['solver_calls']
-                certs.append(crec)
-            drec_out = {k: v for k, v in drec.items()
-                        if k not in ('solver_calls', 'probes')}
-            drec_out['certifications'] = certs
-            result['samples'][samp['i']]['descent'] = drec_out
-            result['samples'][samp['i']]['descended'] = True
-            result['samples'][samp['i']]['descent_ordinal'] = si
+                pending.update(crec)
         after = {p.relative_to(workspace).as_posix(): file_hash(p)
                  for p in inputs}
         if after != result['input_sha256']:
             raise ValueError('Input evidence changed during the sampling run')
         evaluated = [s for s in result['samples']
                      if s.get('status') == 'evaluated']
-        truncated = (len(evaluated) < PROTOCOL['n_samples']
-                     or any(s.get('remaining_samples_unexecuted')
-                            for s in result['samples']))
         descended = [s for s in result['samples']
                      if s.get('descent', {}).get('status')
                      not in (None, 'budget_exhausted', 'not_bracketed')]
         certs = [c for s in descended
                  for c in s['descent'].get('certifications', [])
                  if c.get('status') == 'completed']
-        cert_trunc = any(c.get('status') != 'completed'
-                         for s in descended
-                         for c in s['descent'].get('certifications', []))
-        any_full = any(c.get('any_full_feasible') for c in certs)
-        any_sub = any(c.get('any_passive_feasible') for c in certs)
         tol = PROTOCOL['support_residual_tolerance']
         tol_witness = any(
             a['R'] is not None and a['R'] <= tol
             for s in descended for a in s['descent']['accepted'])
         tol_witness = tol_witness or any(
             s.get('R') is not None and s['R'] <= tol for s in evaluated)
-        improved = any(
-            s['descent'].get('final_R') is not None
-            and s['descent']['final_R'] < seed_floor
-            for s in descended)
-        undecided = any(
-            any(s.get('passive_subsystem', {}).get('status') not in
-                ('feasible', INFEASIBLE)
-                or s.get('support', {}).get('status') not in
-                (FEASIBLE_POSE, INFEASIBLE)
-                or s.get('margin', {}).get('status') not in
-                ('measured', 'unreachable_at_any_shift')
-                for s in c['samples'] if s.get('evidence_saved'))
-            for c in certs)
         result.update(status='completed',
                       samples_evaluated=len(evaluated),
                       samples_descended=len(descended),
                       certifications_executed=len(certs),
                       descent_calls=PROTOCOL['max_solver_calls']-budget[0],
                       tolerance_witness=tol_witness)
-        if truncated or cert_trunc or undecided:
-            result['scientific_outcome'] = 'inconclusive'
-        elif any_full:
-            result['scientific_outcome'] = 'found_full_support_pose'
-        elif any_sub:
-            result['scientific_outcome'] = 'found_subsystem_feasible_pose'
-        elif tol_witness:
-            result['scientific_outcome'] = 'tolerance_support_witness'
-        elif improved:
-            result['scientific_outcome'] = 'global_basin_improvement'
-        else:
-            result['scientific_outcome'] = 'no_global_improvement'
+        classification = global_sample_outcome(result, PROTOCOL)
+        if classification['errors']:
+            raise ValueError('; '.join(classification['errors']))
+        result.update({k: v for k, v in classification.items() if k != 'errors'})
     except TimeoutError:
-        result.update(status='timeout', scientific_outcome='invalid_experiment')
+        if input_hashes_unchanged(workspace, result.get('input_sha256')):
+            result['status'] = 'timeout'
+            classification = global_sample_outcome(result, PROTOCOL)
+            result.update({k: v for k, v in classification.items() if k != 'errors'})
+        else:
+            result.update(status='error', scientific_outcome='invalid_experiment',
+                          error='Input evidence changed during the sampling run')
     except Exception as exc:
         result.update(status='error', scientific_outcome='invalid_experiment',
                       error=f'{type(exc).__name__}: {exc}')
@@ -368,7 +355,7 @@ def run(workspace):
     return result
 
 
-def _check_descent_replay(si, srec, arrays):
+def _check_descent_replay(si, srec, arrays, *, replayed_residuals=None):
     """Replay every saved accepted-step full-support LP for one sample."""
     from .static_support import solve_support
     errs = []
@@ -391,6 +378,8 @@ def _check_descent_replay(si, srec, arrays):
                             arrays[sp+'support_limits'],
                             arrays[sp+'support_friction'])
         R_replay, st = _full_residual(sup)
+        if replayed_residuals is not None:
+            replayed_residuals[ak] = R_replay
         if st not in ('feasible', 'infeasible', 'residual_check_failed'):
             undecided = True
         if a['R'] is None:
@@ -401,7 +390,7 @@ def _check_descent_replay(si, srec, arrays):
         if abs(R_replay-a['R']) > PROTOCOL['replay_tolerance']*max(1., abs(a['R'])):
             errs.append(f'accepted step {ak} replay R differs')
     last_key = descent['accepted_steps']
-    if f'acc_{last_key:04d}_qpos' in arrays:
+    if dp+f'acc_{last_key:04d}_qpos' in arrays:
         q_term = arrays[dp+f'acc_{last_key:04d}_qpos']
         if not np.allclose(q_term, descent['terminal_qpos'], rtol=0, atol=1e-12):
             errs.append('terminal qpos does not match the last accepted step')
@@ -422,7 +411,7 @@ def _check_descent_replay(si, srec, arrays):
 
 def verify(workspace):
     """Replay every saved sample, descent step and certification LP."""
-    from .root_ab import file_hash, write_json
+    from .root_ab import file_hash
     from .root_ab_evidence import read_json
     from .static_support import solve_support
     workspace = Path(workspace).resolve()
@@ -433,9 +422,10 @@ def verify(workspace):
     def fail(msg):
         verdict['errors'].append(msg)
         verdict['status'] = 'failed'
-        write_json(d/'verification.json', verdict)
-        return verdict
+        return write_outcome_receipt(d, verdict)
     try:
+        source_hashes = outcome_source_hashes(d)
+        verdict['source_sha256'] = source_hashes
         result = read_json(d/'result.json')
         proto = read_json(d/'protocol.json')
         if result.get('protocol_sha256') != protocol_hash():
@@ -446,6 +436,13 @@ def verify(workspace):
             p = workspace/rel
             if not p.is_file() or file_hash(p) != expected:
                 return fail(f'Input hash mismatch: {rel}')
+        baseline_path = workspace/'full-descent/result.json'
+        if (result.get('input_sha256', {}).get('full-descent/result.json')
+                != file_hash(baseline_path)):
+            return fail('Missing hashed full-descent baseline evidence')
+        baseline = observed_terminal_residual(read_json(baseline_path))
+        if type(result.get('baseline_floor')) not in (int, float) or result['baseline_floor'] != baseline:
+            return fail('Recorded baseline differs from linked full-descent observations')
         with np.load(d/'observations.npz', allow_pickle=False) as z:
             arrays = {k: z[k].copy() for k in z.files}
         undecided = False
@@ -457,6 +454,7 @@ def verify(workspace):
         claimed_samples = set()
         tol = PROTOCOL['support_residual_tolerance']
         tol_witness = False
+        basin_improved = False
         for srec in result.get('samples', []):
             if srec.get('status') != 'evaluated':
                 continue
@@ -484,7 +482,7 @@ def verify(workspace):
                             f'{sp} replay finite but recorded non-finite')
                 elif abs(R_replay-srec['R']) > tol*max(1., abs(srec['R'])):
                     verdict['errors'].append(f'{sp} replay R differs')
-                if srec['R'] is not None and srec['R'] <= tol:
+                if np.isfinite(R_replay) and 0 <= R_replay <= tol:
                     tol_witness = True
         extra_samples = sample_prefixes-claimed_samples
         if extra_samples:
@@ -500,12 +498,18 @@ def verify(workspace):
                 verdict['errors'].append(
                     f"sample {srec['index']} descended but no ordinal recorded")
                 continue
-            und, errs = _check_descent_replay(si, srec, arrays)
+            replayed_residuals = {}
+            und, errs = _check_descent_replay(
+                si, srec, arrays, replayed_residuals=replayed_residuals)
             undecided = undecided or und
             n_traj += len(srec['descent']['accepted'])
-            for a in srec['descent']['accepted']:
-                if a['R'] is not None and a['R'] <= tol:
+            for residual in replayed_residuals.values():
+                if np.isfinite(residual) and 0 <= residual <= tol:
                     tol_witness = True
+            terminal = replayed_residuals.get(srec['descent']['accepted_steps'])
+            if (terminal is not None and np.isfinite(terminal)
+                    and 0 <= terminal < result['baseline_floor']):
+                basin_improved = True
             for e in errs:
                 verdict['errors'].append(f'sample {si}: {e}')
             for ci, crec in enumerate(
@@ -560,53 +564,30 @@ def verify(workspace):
         if extra:
             verdict['errors'].append(
                 f'saved cert witnesses not linked: {sorted(extra)[:4]}')
-        if verdict['errors']:
-            return fail('Evidence validation: '+'; '.join(verdict['errors'][:8]))
         evaluated = [s for s in result['samples']
                      if s.get('status') == 'evaluated']
-        truncated = (len(evaluated) < PROTOCOL['n_samples']
-                     or any(s.get('remaining_samples_unexecuted')
-                            for s in result['samples']))
-        descended = [s for s in result['samples']
-                     if s.get('descent', {}).get('status')
-                     not in (None, 'budget_exhausted', 'not_bracketed')]
-        certs = [c for s in descended
-                 for c in s['descent'].get('certifications', [])
-                 if c.get('status') == 'completed']
-        cert_trunc = any(c.get('status') != 'completed'
-                         for s in descended
-                         for c in s['descent'].get('certifications', []))
-        any_full = any(c.get('any_full_feasible') for c in certs)
-        any_sub = any(c.get('any_passive_feasible') for c in certs)
-        improved = any(
-            s['descent'].get('final_R') is not None
-            and s['descent']['final_R'] < result['baseline_floor']
-            for s in descended)
-        if truncated or cert_trunc or undecided:
-            replayed = 'inconclusive'
-        elif any_full:
-            replayed = 'found_full_support_pose'
-        elif any_sub:
-            replayed = 'found_subsystem_feasible_pose'
-        elif tol_witness:
-            replayed = 'tolerance_support_witness'
-        elif improved:
-            replayed = 'global_basin_improvement'
-        else:
-            replayed = 'no_global_improvement'
+        classification = global_sample_outcome(
+            result, PROTOCOL, replay_undecided=undecided,
+            tolerance_witness=tol_witness, basin_improved=basin_improved)
+        verdict['errors'].extend(classification['errors'])
+        if verdict['errors']:
+            return fail('Evidence validation: '+'; '.join(verdict['errors'][:8]))
+        if outcome_source_hashes(d) != source_hashes:
+            return fail('Source evidence changed during outcome re-verification')
         verdict.update(status='completed', evidence_valid=True,
-                       scientific_outcome=replayed,
+                       scientific_outcome=classification['scientific_outcome'],
+                       outcome_classification=classification['outcome_classification'],
                        recorded_outcome=result.get('scientific_outcome'),
+                       outcome_reclassified=(classification['scientific_outcome']
+                                             != result.get('scientific_outcome')),
                        trajectory_steps_replayed=n_traj,
                        witnesses_checked=n_wit,
                        samples_checked=len(evaluated))
-        write_json(d/'verification.json', verdict)
-        return verdict
+        return write_outcome_receipt(d, verdict)
     except Exception as exc:
         verdict['errors'].append(f'{type(exc).__name__}: {exc}')
         verdict['status'] = 'error'
-        write_json(d/'verification.json', verdict)
-        return verdict
+        return write_outcome_receipt(d, verdict)
 
 
 def main(argv=None):
@@ -617,7 +598,7 @@ def main(argv=None):
     out = verify(args.workspace) if args.verify else run(args.workspace)
     print(json.dumps({k: out.get(k) for k in
                       ('status', 'scientific_outcome', 'evidence_valid',
-                       'errors')}, indent=2, default=str))
+                       'errors', 'verification_receipt')}, indent=2, default=str))
 
 
 if __name__ == '__main__':
