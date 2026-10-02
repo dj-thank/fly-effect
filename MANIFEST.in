@@ -5,6 +5,19 @@ recursive-include organism_core *.json
 recursive-include docs *.md *.svg
 recursive-include scripts *.py
 recursive-include examples *.json
+# Preserve the exact, reviewed replay and its third-party notices in the sdist.
+include examples/hae-recorded-replay/README.md
+include examples/hae-recorded-replay/PROVENANCE.md
+include examples/hae-recorded-replay/NOTICE.txt
+include examples/hae-recorded-replay/LICENSES/Apache-2.0.txt
+include examples/hae-recorded-replay/LICENSES/CC-BY-4.0.url.txt
+include examples/hae-recorded-replay/index.html
+include examples/hae-recorded-replay/replay.html
+include examples/hae-recorded-replay/launch.cmd
+include examples/hae-recorded-replay/assets/replay.js
+include examples/hae-recorded-replay/assets/replay-data.js
+include examples/hae-recorded-replay/assets/actual-motion.mp4
+include examples/hae-recorded-replay/assets/pose-045010.png
 recursive-include tests *.py
 recursive-include .github *.yml *.md
 prune work

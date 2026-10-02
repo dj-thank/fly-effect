@@ -31,6 +31,7 @@ jobs:
       - run: python scripts/check_experiment.py examples/experiment.json
       - run: python scripts/audit_release.py
       - run: python -m build
+      - run: python scripts/check_sdist.py dist
       - name: Retain test evidence even when tests fail
         if: always()
         uses: actions/upload-artifact@v4
