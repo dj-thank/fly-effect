@@ -15,6 +15,10 @@ EDGE_DTYPE=np.dtype([('pre','<u4'),('post','<u4'),('count','<u4'),('source_row',
 def load_graph(directory):
     directory=Path(directory)
     lock=json.loads(Path(__file__).with_name('graph_lock.json').read_text(encoding='utf-8'))
+    if not isinstance(lock,dict) or not isinstance(lock.get('files'),dict):raise ValueError('Graph lock files must be a dictionary')
+    required={'edges.bin','body_ids.npy','motor_indices.npy','glutamate_inhibitory_hypothesis_signs.npy','neurons.parquet'}
+    missing=required-set(lock['files'])
+    if missing:raise ValueError('Graph lock missing required artifacts: '+','.join(sorted(missing)))
     for name,expected in lock['files'].items():
         path=directory/name
         if not path.is_file():raise FileNotFoundError(f'Missing graph artifact: {name}. See docs/DATA.md.')
@@ -28,11 +32,15 @@ def load_graph(directory):
     if signs.shape!=ids.shape or not np.isin(signs,[-1,0,1]).all():raise ValueError('Invalid sign hypothesis')
     if edges['pre'].max()>=len(ids) or edges['post'].max()>=len(ids):raise ValueError('Invalid edge index')
     if len(motor)!=815 or motor.min()<0 or motor.max()>=len(ids) or len(set(motor))!=815:raise ValueError('Invalid motor index set')
-    return ids,motor,signs,edges,lock['files']['edges.bin']
+    # A checkpoint also depends on IDs, motor membership, signs and annotations.
+    # Keep the edge hash for existing provenance consumers, and fingerprint the
+    # complete verified lock independently of JSON formatting or key order.
+    manifest_hash=hashlib.sha256(json.dumps(lock,sort_keys=True,separators=(',',':'),allow_nan=False).encode('utf-8')).hexdigest()
+    return ids,motor,signs,edges,lock['files']['edges.bin'],manifest_hash
 
 class Brain:
     def __init__(self,seed=0):
-        self.ids,self.motor,self.signs,self.edges,self.graph_hash=load_graph(GRAPH)
+        self.ids,self.motor,self.signs,self.edges,self.graph_hash,self.graph_manifest_hash=load_graph(GRAPH)
         self._construct(len(self.ids),self.edges['pre'].astype(np.int32),self.edges['post'].astype(np.int32),self.edges['count'].astype(np.float64)*self.signs[self.edges['pre']],seed)
 
     @classmethod
@@ -41,8 +49,13 @@ class Brain:
         obj.ids=np.array([1,2,3]);obj.motor=np.array([2]);obj.signs=np.array([1,1,0])
         obj.edges=np.array([(0,1,300,0),(1,2,300,1)],dtype=EDGE_DTYPE)
         obj.graph_hash='synthetic-example-not-biological-data'
+        obj.graph_manifest_hash=hashlib.sha256(obj.graph_hash.encode('utf-8')).hexdigest()
         obj._construct(3,np.array([0,1]),np.array([1,2]),np.array([300.,300.]),seed)
         return obj
+
+    @property
+    def graph_identity(self):
+        return {'graph_sha256':self.graph_hash,'graph_manifest_sha256':self.graph_manifest_hash}
 
     def _construct(self,n,pre,post,weights,seed):
         b.start_scope();b.seed(seed);b.defaultclock.dt=.1*b.ms;b.prefs.codegen.target='numpy'

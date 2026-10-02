@@ -14,7 +14,8 @@ FLY_EFFECT_DATA_DIR/graphに次の処理済みファイルを置きます。
 
 固定ハッシュはorganism_core/graph_lock.jsonにあります。166,700ニューロンと25,582,938接続行を保持します。このカスタム形式の構築手順を公開可能な形にすることは未完了の優先課題です。ハッシュがあるだけで誰でも取得できるとは主張しません。
 
+チェックポイントの同一性には接続行の `graph_sha256` に加え、検査済みロック全体の `graph_manifest_sha256` を含めます。元ID、運動ニューロン集合、符号仮説、注釈、データセット名・規模の変更も復元前に不一致として拒否します。ロックJSONの空白・キー順だけの変更ではこのハッシュは変わりません。以前の同一性情報を持つチェックポイントは自動変換・再ラベルせず、元のコードとデータで扱ってください。
+
 筋対応にはDATA_DIR/manc-supplements/elife-96084-supp3-v1.csvと、ローカル生成する対応仮説が必要です。外部素材を追加する提案では出典・版・ライセンス・加工内容・ハッシュを示し、権利確認前にバイナリをコミットしないでください。
 
 参考: [FlyEM](https://www.janelia.org/project-team/flyem)、[FlyGym](https://github.com/NeLy-EPFL/flygym)、[CPG研究](https://github.com/smpuglie/Pugliese_cpg_2025)。各提供元は独立しており、リンクは再配布許可を意味しません。
-

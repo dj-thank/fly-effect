@@ -82,7 +82,7 @@ class Engine:
         self.start=b.NetworkOperation(start,when='start',order=-100,name='organism_observe')
         self.end=b.NetworkOperation(end,when='end',order=100,name='organism_evolve')
         self.brain.network.add(self.driver,self.link,self.start,self.end,self.input_monitor)
-        self.identity={'schema':1,'code_sha256':code_hash(),'graph_sha256':self.brain.graph_hash,
+        self.identity={'schema':1,'code_sha256':code_hash(),**self.brain.graph_identity,
                        'body_sha256':self.body.digest,'seed':seed,
                        'settings':self.settings,'proprioception_priors':PRIORS,'load_priors':LOAD_PRIORS,
                        'joint_profile':self.body.joint_profile,'model_source_hashes':self.body.model_source_hashes,
