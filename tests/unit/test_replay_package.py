@@ -129,6 +129,30 @@ def test_replay_package_rejects_source_recording_and_raw_input(tmp_path):
         build_manifest(tmp_path, "2026-09-22")
 
 
+def test_replay_package_build_rejects_nested_manifest_without_overwriting(tmp_path):
+    make_package(tmp_path)
+    build_manifest(tmp_path, "2026-10-13")
+    manifest_path = tmp_path / "PUBLIC_FILE_MANIFEST.json"
+    original_manifest = manifest_path.read_bytes()
+    (tmp_path / "assets/PUBLIC_FILE_MANIFEST.json").write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="assets/PUBLIC_FILE_MANIFEST.json"):
+        build_manifest(tmp_path, "2026-10-14")
+
+    assert manifest_path.read_bytes() == original_manifest
+
+
+def test_replay_package_verify_rejects_unlisted_nested_manifest(tmp_path):
+    make_package(tmp_path)
+    build_manifest(tmp_path, "2026-10-13")
+    (tmp_path / "assets/PUBLIC_FILE_MANIFEST.json").write_text("{}\n", encoding="utf-8")
+
+    failures = verify_package(tmp_path)
+
+    assert "unexpected package files: ['assets/PUBLIC_FILE_MANIFEST.json']" in failures
+    assert "manifest file set does not match package file set" in failures
+
+
 def test_replay_package_rejects_absolute_path_and_stale_hash(tmp_path):
     make_package(tmp_path)
     build_manifest(tmp_path, "2026-09-22")

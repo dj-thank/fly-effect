@@ -192,10 +192,11 @@ def sha256(path: Path) -> str:
 
 
 def package_files(root: Path) -> dict[str, Path]:
+    # Only the root manifest is excluded from its own inventory and hashes.
     return {
         path.relative_to(root).as_posix(): path
         for path in root.rglob("*")
-        if path.is_file() and path.name != MANIFEST_NAME
+        if path.is_file() and path != root / MANIFEST_NAME
     }
 
 
